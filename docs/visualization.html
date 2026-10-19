@@ -1,0 +1,1713 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mini Git 시각 가이드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 한 줄 세로 문서. 맨 위 실행 화면(터미널 + 커밋 그래프), 아래로 개념별 단계 보기 */
+:root {
+  --bg: #f2f4f3;
+  --surface: #ffffff;
+  --sunk: #e8ecea;
+  --ink: #17201c;
+  --muted: #56655e;
+  --line: #d3dbd7;
+  --line-strong: #9aaaa2;
+  --accent: #0a6a84;
+  --accent-soft: #dcecf0;
+  --main: #c2410c;
+  --feature: #6d28d9;
+  --lane3: #0f766e;
+  --lane4: #a16207;
+  --ok: #2f7d32;
+  --ok-soft: #e1f1e2;
+  --bad: #b42318;
+  --bad-soft: #fbe5e2;
+  --term-bg: #121b18;
+  --term-fg: #d5e2dc;
+  --term-dim: #7c9188;
+  --term-accent: #78c4d8;
+  --term-bad: #f19a8e;
+  --s-ins: #c2410c;
+  --s-merge: #0a6a84;
+  --s-quick: #6d28d9;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1412; --surface: #161f1c; --sunk: #1c2723; --ink: #e2ebe6; --muted: #93a49c;
+    --line: #2a3632; --line-strong: #4d5f58; --accent: #5cb7cf; --accent-soft: #17323a;
+    --main: #f08a4b; --feature: #a78bfa; --lane3: #2dd4bf; --lane4: #facc15;
+    --ok: #6fcf75; --ok-soft: #173020; --bad: #f2877a; --bad-soft: #3a1c19;
+    --term-bg: #080c0b; --term-fg: #d5e2dc; --term-dim: #71867d; --term-accent: #78c4d8; --term-bad: #f19a8e;
+    --s-ins: #f08a4b; --s-merge: #5cb7cf; --s-quick: #a78bfa;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1412; --surface: #161f1c; --sunk: #1c2723; --ink: #e2ebe6; --muted: #93a49c;
+  --line: #2a3632; --line-strong: #4d5f58; --accent: #5cb7cf; --accent-soft: #17323a;
+  --main: #f08a4b; --feature: #a78bfa; --lane3: #2dd4bf; --lane4: #facc15;
+  --ok: #6fcf75; --ok-soft: #173020; --bad: #f2877a; --bad-soft: #3a1c19;
+  --term-bg: #080c0b; --term-fg: #d5e2dc; --term-dim: #71867d; --term-accent: #78c4d8; --term-bad: #f19a8e;
+  --s-ins: #f08a4b; --s-merge: #5cb7cf; --s-quick: #a78bfa;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: 1120px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+code { background: var(--sunk); padding: 1px 5px; border-radius: 4px; }
+a { color: var(--accent); }
+h1, h2, h3 { text-wrap: balance; line-height: 1.3; margin: 0; }
+h2 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1.08rem; font-weight: 600; }
+p { margin: 0; }
+ul { margin: 0; padding-left: 1.2em; }
+li + li { margin-top: 2px; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- top ---------- */
+header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+header.top .wrap { padding-block: 36px 28px; display: grid; gap: 18px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 700; letter-spacing: -0.02em; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+h1 .hashmark { font-family: var(--font-mono); font-size: 0.42em; font-weight: 500; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 4px; letter-spacing: 0; }
+.lede { max-width: 68ch; color: var(--muted); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; }
+.fact { font-size: 13px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
+.fact b { color: var(--ink); font-weight: 600; }
+
+.goals { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 900px) { .goals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .goals { grid-template-columns: minmax(0, 1fr); } }
+.goal { display: grid; gap: 4px; align-content: start; text-decoration: none; color: inherit; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
+.goal:hover { border-color: var(--accent); }
+.goal .n { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }
+.goal .t { font-weight: 600; font-size: 14px; line-height: 1.45; }
+.goal .w { font-size: 12px; color: var(--muted); }
+
+nav.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+nav.toc .wrap { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; scrollbar-width: thin; }
+nav.toc a { flex: none; font-size: 13px; text-decoration: none; color: var(--muted); padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+nav.toc a:hover { color: var(--ink); background: var(--sunk); }
+nav.toc a.bonus::after { content: " 보너스"; font-size: 10px; color: var(--feature); }
+
+main section { padding-block: 44px; border-bottom: 1px solid var(--line); scroll-margin-top: 48px; }
+.sec-head { display: grid; gap: 8px; margin-bottom: 22px; max-width: 76ch; }
+.sec-head .cmd { font-family: var(--font-mono); font-size: 13px; color: var(--accent); }
+.sec-head p { color: var(--muted); }
+.tag-bonus { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--feature); border: 1px solid currentColor; border-radius: 4px; padding: 0 5px; vertical-align: 3px; margin-left: 6px; }
+
+.defs { display: grid; gap: 6px; margin-bottom: 20px; max-width: 80ch; }
+.def { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); gap: 10px; font-size: 14px; }
+.def dt { color: var(--muted); font-size: 13px; padding-top: 1px; }
+.def dd { margin: 0; }
+
+.two { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); min-width: 0; }
+.panel-pad { padding: 16px 18px; }
+.note { font-size: 13px; color: var(--muted); }
+.points { display: grid; gap: 6px; font-size: 14px; }
+.points li::marker { color: var(--accent); }
+
+/* ---------- playground ---------- */
+.play { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr); gap: 16px; align-items: stretch; }
+@media (max-width: 900px) { .play { grid-template-columns: minmax(0, 1fr); } }
+.term { background: var(--term-bg); color: var(--term-fg); border-radius: var(--r); display: flex; flex-direction: column; min-width: 0; height: 470px; font-family: var(--font-mono); font-size: 13px; }
+.term-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px 8px 14px; border-bottom: 1px solid #ffffff14; color: var(--term-dim); font-size: 12px; flex-wrap: wrap; }
+.term-actions { display: flex; gap: 6px; }
+.term-btn { background: #ffffff10; border: 1px solid #ffffff22; color: var(--term-fg); border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; font-family: var(--font-body); }
+.term-btn:hover { background: #ffffff1c; }
+.term-btn:disabled { opacity: 0.5; cursor: default; }
+.term-out { flex: 1; overflow-y: auto; padding: 10px 14px; white-space: pre-wrap; word-break: break-word; line-height: 1.55; }
+.term-out .cmd { color: #ffffff; margin-top: 6px; }
+.term-out .cmd:first-child { margin-top: 0; }
+.term-out .p { color: var(--term-accent); }
+.term-out .err { color: var(--term-bad); }
+.term-out .h { color: var(--term-accent); }
+.term-out .sys { color: var(--term-dim); font-style: italic; }
+.term-in { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid #ffffff14; }
+.term-in label { color: var(--term-accent); flex: none; }
+.term-in input { flex: 1; min-width: 0; background: transparent; border: 0; color: #fff; font: inherit; outline: none; caret-color: var(--term-accent); }
+.term-in:focus-within { box-shadow: inset 0 0 0 1px #78c4d855; }
+
+.gpanel { display: flex; flex-direction: column; min-width: 0; }
+.gpanel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; flex-wrap: wrap; }
+.gpanel-head .cap { color: var(--muted); }
+.gscroll { overflow-x: auto; min-height: 220px; }
+.gscroll svg { display: block; }
+.gempty { padding: 40px 18px; color: var(--muted); font-size: 14px; text-align: center; }
+.state { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); font-family: var(--font-mono); font-size: 12px; }
+@media (max-width: 560px) { .state { grid-template-columns: minmax(0, 1fr); } }
+.state > div { padding: 10px 12px; min-width: 0; max-height: 170px; overflow: auto; }
+.state > div + div { border-left: 1px solid var(--line); }
+@media (max-width: 560px) { .state > div + div { border-left: 0; border-top: 1px solid var(--line); } }
+.state .lbl { font-family: var(--font-body); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.state .row { white-space: nowrap; }
+.state .k { color: var(--accent); }
+.state .dim { color: var(--muted); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; align-items: center; }
+.chips .lead { font-size: 13px; color: var(--muted); margin-right: 4px; }
+.run { font-family: var(--font-mono); font-size: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; cursor: pointer; color: var(--ink); white-space: nowrap; }
+.run:hover { border-color: var(--accent); color: var(--accent); }
+.run::before { content: "▸ "; color: var(--accent); }
+
+/* commit graph svg */
+.g-edge { fill: none; stroke-width: 2.5; stroke-linecap: round; }
+.g-node { stroke-width: 3; fill: var(--surface); }
+.g-hash { font-family: var(--font-mono); font-size: 11px; fill: var(--ink); }
+.g-msg { font-family: var(--font-body); font-size: 11px; fill: var(--muted); }
+.g-pill-t { font-family: var(--font-mono); font-size: 11px; font-weight: 500; }
+.g-badge { fill: var(--accent); }
+.g-badge-t { fill: var(--surface); font-family: var(--font-mono); font-size: 10px; font-weight: 600; }
+.dimmed { opacity: 0.25; }
+.g-hl-edge { stroke: var(--accent) !important; stroke-width: 5; }
+.g-origin { stroke-dasharray: 3 3; }
+
+/* ---------- steppers ---------- */
+.stepper { display: grid; gap: 0; }
+.stepper svg { width: 100%; height: auto; display: block; }
+.st-vis { padding: 10px 12px 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.st-vis svg { min-width: 460px; }
+.st-body { padding: 14px 18px; display: grid; gap: 12px; }
+.st-cap { font-size: 14px; min-height: 3.2em; }
+.st-cap b { font-weight: 600; }
+.st-ctl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 13px; }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.st-count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+.dots { display: flex; gap: 4px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.dots i.on { background: var(--accent); }
+.kv { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 4px 10px; font-size: 13px; align-items: center; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px; min-height: 24px; align-items: center; }
+.pill { font-family: var(--font-mono); font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--sunk); white-space: nowrap; }
+.pill.q { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.pill.done { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+.pill.skip { border-color: var(--bad); color: var(--bad); background: var(--bad-soft); text-decoration: line-through; }
+.empty { color: var(--muted); font-size: 12px; }
+
+/* diamond graph */
+.d-box { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.5; }
+.d-msg { font-family: var(--font-body); font-size: 13px; font-weight: 500; fill: var(--ink); }
+.d-hash { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+.d-edge { stroke: var(--line-strong); stroke-width: 2; fill: none; }
+.d-edge.hl { stroke: var(--accent); stroke-width: 4; }
+.d-edge.skip { stroke: var(--bad); stroke-dasharray: 5 4; }
+.d-edge.dim { opacity: 0.3; }
+.d-arrow { fill: var(--line-strong); }
+.d-arrow-hl { fill: var(--accent); }
+.d-arrow-skip { fill: var(--bad); }
+g.n-queue .d-box { stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 6 4; }
+g.n-current .d-box { stroke: var(--accent); stroke-width: 3; fill: var(--accent-soft); }
+g.n-done .d-box { stroke: var(--ok); stroke-width: 2.5; fill: var(--ok-soft); }
+g.n-start .d-box { stroke: var(--ink); stroke-width: 2.5; }
+g.n-dim { opacity: 0.4; }
+.d-badge { fill: var(--ink); }
+.d-badge-t { fill: var(--surface); font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+g.n-done .d-badge { fill: var(--ok); }
+g.n-current .d-badge, g.n-queue .d-badge { fill: var(--accent); }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; background: var(--sunk); }
+td.c { text-align: center; }
+.ok { color: var(--ok); font-weight: 600; }
+tr.grp td { background: var(--bg); font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; padding-top: 14px; }
+
+/* index demo */
+.search-in { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.search-in input { font-family: var(--font-mono); font-size: 14px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); min-width: 0; flex: 1 1 200px; }
+.search-in input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+.idx-tbl td:first-child { font-family: var(--font-mono); white-space: nowrap; }
+.idx-tbl tr.hit td { background: var(--accent-soft); }
+.idx-tbl tr.hit td:first-child { color: var(--accent); font-weight: 600; }
+.cmp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.cmp > div { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; display: grid; gap: 2px; }
+.cmp .big { font-family: var(--font-mono); font-size: 1.6rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cmp .fast .big { color: var(--accent); }
+.cmp .lbl { font-size: 12px; color: var(--muted); }
+.result-list { display: grid; gap: 4px; font-size: 13px; }
+.result-list .r { font-family: var(--font-mono); }
+.cm-list { display: grid; gap: 4px; }
+.cm { display: flex; gap: 8px; align-items: baseline; font-size: 13px; padding: 3px 8px; border-radius: 5px; }
+.cm .mono { color: var(--muted); }
+.cm.hit { background: var(--accent-soft); }
+.cm.hit .mono { color: var(--accent); }
+
+/* sort demo */
+.sort-stage { position: relative; height: 196px; }
+.srow { position: absolute; left: 0; right: 0; height: 42px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); transition: top 0.6s cubic-bezier(.4,.1,.2,1); font-size: 14px; }
+.srow .ord { font-family: var(--font-mono); font-size: 12px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--sunk); color: var(--muted); flex: none; }
+.srow .au { font-weight: 600; width: 46px; flex: none; }
+.srow.alice .au { color: var(--main); }
+.srow.bob .au { color: var(--feature); }
+.srow .msg { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chart text { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .axis { stroke: var(--line-strong); }
+.chart .ln { fill: none; stroke-width: 2.5; }
+.chart .lbl-end { font-size: 12px; font-weight: 600; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+
+/* lcs */
+.lcs td, .lcs th { text-align: center; font-family: var(--font-mono); font-size: 12px; padding: 6px 8px; border: 1px solid var(--line); }
+.lcs th { background: var(--sunk); }
+.lcs td.trace { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.diffout { font-family: var(--font-mono); font-size: 13px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+.diffout div { padding: 3px 10px; white-space: pre; }
+.diffout .add { background: var(--ok-soft); color: var(--ok); }
+.diffout .del { background: var(--bad-soft); color: var(--bad); }
+
+/* architecture */
+.layers { display: grid; gap: 8px; }
+.layer { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 12px; align-items: stretch; }
+@media (max-width: 560px) { .layer { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+.layer .who { font-size: 12px; color: var(--muted); padding-top: 10px; }
+.layer .boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.fbox { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 9px 12px; display: grid; gap: 2px; }
+.fbox .f { font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+.fbox .d { font-size: 12px; color: var(--muted); }
+.fbox.bonus { border-style: dashed; }
+.down { text-align: center; color: var(--line-strong); font-size: 14px; line-height: 1; }
+.flow { counter-reset: f; display: grid; gap: 0; padding: 0; list-style: none; }
+.flow li { counter-increment: f; display: grid; grid-template-columns: 2em 9.5em minmax(0, 1fr); gap: 8px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 13px; margin: 0; }
+.flow li::before { content: counter(f); font-family: var(--font-mono); color: var(--accent); font-weight: 600; }
+.flow .fn { font-family: var(--font-mono); font-size: 12px; }
+@media (max-width: 560px) { .flow li { grid-template-columns: 2em minmax(0, 1fr); } .flow li .what { grid-column: 2; } }
+
+footer { padding-block: 28px 40px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">Codyssey · B5-2</div>
+    <h1>Mini Git <span class="hashmark">505181a</span></h1>
+    <p class="lede">파일이 언제 어떻게 바뀌었는지 기록하는 작은 프로그램. Git이 커밋을 저장하고 찾는 방식(그래프, 해시맵, 역색인, 정렬)을 파이썬으로 직접 구현한 CLI입니다. 이 페이지는 평가 때 코드와 같이 보면서 동작을 바로 확인할 수 있게 만든 시각 자료입니다.</p>
+    <div class="facts">
+      <span class="fact"><b>python main.py</b> 로 실행</span>
+      <span class="fact">Python <b>3.10+</b>, 외부 라이브러리 없음</span>
+      <span class="fact">데이터는 <b>RAM</b>에만 (exit 하면 사라짐)</span>
+      <span class="fact">단위 테스트 <b>23개</b></span>
+      <span class="fact">보너스 <b>MERGE · DIFF · BENCH</b></span>
+    </div>
+    <div class="goals" aria-label="과제를 마치고 설명할 수 있어야 하는 것">
+      <a class="goal" href="#dag"><span class="n">설명 1</span><span class="t">커밋 구조가 왜 DAG인지</span><span class="w">commit.py · graph.py</span></a>
+      <a class="goal" href="#topo"><span class="n">설명 2</span><span class="t">LOG에 위상 정렬이 필요한 이유</span><span class="w">graph.topological_sort</span></a>
+      <a class="goal" href="#path"><span class="n">설명 3</span><span class="t">최단 경로와 모든 조상 찾기</span><span class="w">graph.shortest_path · find_ancestors</span></a>
+      <a class="goal" href="#sort"><span class="n">설명 4</span><span class="t">정렬의 시간복잡도와 안정성</span><span class="w">sorting.merge_sort</span></a>
+      <a class="goal" href="#index"><span class="n">설명 5</span><span class="t">역색인이 순회보다 빠른 이유</span><span class="w">index.SearchIndex</span></a>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="목차">
+  <div class="wrap">
+    <a href="#play">직접 실행</a>
+    <a href="#dag">DAG</a>
+    <a href="#topo">LOG · 위상 정렬</a>
+    <a href="#path">PATH · BFS</a>
+    <a href="#anc">ANCESTORS</a>
+    <a href="#index">SEARCH · 역색인</a>
+    <a href="#sort">정렬</a>
+    <a href="#bonus" class="bonus">MERGE · DIFF</a>
+    <a href="#struct">구조</a>
+    <a href="#check">체크리스트</a>
+    <a href="#errors">예외 처리</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ================= PLAYGROUND ================= -->
+<section id="play">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">mini-git&gt;</span>
+      <h2>직접 실행해 보기</h2>
+      <p>파이썬 코드와 같은 규칙으로 옮긴 브라우저용 Mini Git입니다. 명령을 입력하면 오른쪽 커밋 그래프와 저장소 상태(<code>branches</code>, <code>commits</code>, <code>keyword_index</code>)가 바로 바뀝니다. hash는 실행할 때마다 새로 만들어집니다.</p>
+    </div>
+    <div class="play">
+      <div class="term" id="term">
+        <div class="term-bar">
+          <span>python main.py</span>
+          <div class="term-actions">
+            <button class="term-btn" id="btnDemo" type="button">시연 재생</button>
+            <button class="term-btn" id="btnReset" type="button">초기화</button>
+          </div>
+        </div>
+        <div class="term-out" id="termOut" aria-live="polite"></div>
+        <form class="term-in" id="termForm" autocomplete="off">
+          <label for="termInput">mini-git&gt;</label>
+          <input id="termInput" type="text" spellcheck="false" autocapitalize="off" placeholder="help 를 입력해 보세요">
+        </form>
+      </div>
+      <div class="panel gpanel">
+        <div class="gpanel-head">
+          <strong>커밋 그래프</strong>
+          <span class="cap" id="gcap">선 = 자식 → 부모 연결, 색 = 커밋을 만든 브랜치</span>
+        </div>
+        <div class="gscroll" id="gscroll"></div>
+        <div class="state" id="state"></div>
+      </div>
+    </div>
+    <div class="chips" id="quick">
+      <span class="lead">눌러서 실행</span>
+      <button class="run" type="button" data-cmd="log">log</button>
+      <button class="run" type="button" data-cmd="branch">branch</button>
+      <button class="run" type="button" data-cmd="path {msg:Add login feature} {msg:Add payment feature}">path login → payment</button>
+      <button class="run" type="button" data-cmd="ancestors {head}">ancestors HEAD</button>
+      <button class="run" type="button" data-cmd='search "login"'>search "login"</button>
+      <button class="run" type="button" data-cmd="log --sort-by=author">log --sort-by=author</button>
+      <button class="run" type="button" data-cmd="merge feature">merge feature</button>
+      <button class="run" type="button" data-cmd="diff a.txt b.txt">diff a.txt b.txt</button>
+      <button class="run" type="button" data-cmd="bench">bench</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DAG ================= -->
+<section id="dag">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">자료구조 · commit.py, graph.py</span>
+      <h2>커밋 그래프는 DAG</h2>
+      <p>아래 단계 보기는 모두 같은 예시를 씁니다. 최초 커밋 뒤 <code>main</code>에서 결제 기능, <code>feature</code>에서 로그인 기능을 만들고 두 브랜치를 합친 상황입니다.</p>
+    </div>
+    <dl class="defs">
+      <div class="def"><dt>그래프</dt><dd>노드(커밋)와 간선(부모 연결)으로 이루어진 구조</dd></div>
+      <div class="def"><dt>DAG</dt><dd>간선에 방향이 있고, 따라가도 출발점으로 돌아오는 순환이 없는 그래프 (Directed Acyclic Graph)</dd></div>
+    </dl>
+    <div class="two">
+      <div class="panel"><div class="st-vis" id="dagVis"></div>
+        <div class="st-body"><p class="note">화살표 = <code>parents</code>에 저장된 부모 hash. 화살표는 항상 과거(왼쪽)를 향함</p></div>
+      </div>
+      <div class="panel panel-pad">
+        <ul class="points">
+          <li><b>방향이 있음</b> : 커밋을 만들 때 앞 커밋은 이미 있고 뒤 커밋은 아직 없음 → 앞 커밋만 기억</li>
+          <li><b>순환이 없음</b> : 이미 있는 커밋만 부모로 가리킬 수 있고, 만든 커밋은 바뀌지 않음 → 따라가면 결국 <code>Initial commit</code>에서 끝남</li>
+          <li><b>트리가 아님</b> : merge 커밋은 부모가 2개 (<code>parents=["78ca51e", "15809e9"]</code>)</li>
+          <li><b>한 번 더 검증</b> : <code>topological_sort()</code>가 커밋을 다 출력하지 못하면 순환으로 보고 에러</li>
+        </ul>
+        <div class="tbl-wrap" style="margin-top:14px">
+          <table>
+            <thead><tr><th>커밋 (hash)</th><th>parents</th></tr></thead>
+            <tbody>
+              <tr><td>Initial commit <span class="mono note">505181a</span></td><td class="mono">[]</td></tr>
+              <tr><td>Add login feature <span class="mono note">15809e9</span></td><td class="mono">["505181a"]</td></tr>
+              <tr><td>Add payment feature <span class="mono note">78ca51e</span></td><td class="mono">["505181a"]</td></tr>
+              <tr><td>Merge branch 'feature' <span class="mono note">e7a1f20</span></td><td class="mono">["78ca51e", "15809e9"]</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note" style="margin-top:10px">저장은 <code>commits = {hash: Commit}</code> 해시맵. hash로 커밋을 평균 O(1)에 찾고, hash는 SHA-1 앞 7자리 (겹치면 다시 해싱해서 세션 안에서 중복 0개)</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TOPO ================= -->
+<section id="topo">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">LOG · graph.topological_sort()</span>
+      <h2>위상 정렬 : 부모가 항상 먼저</h2>
+    </div>
+    <dl class="defs">
+      <div class="def"><dt>정의</dt><dd>방향 그래프에서 "A가 B보다 먼저"라는 간선 조건을 모두 지키도록 노드를 일렬로 나열하는 것</dd></div>
+      <div class="def"><dt>과제 요구</dt><dd><code>LOG</code>는 최신순이 아니라 부모 커밋이 항상 자식보다 먼저 출력</dd></div>
+      <div class="def"><dt>왜</dt><dd>시각 순은 같은 초에 만든 커밋끼리 순서가 보장되지 않음 → 부모 관계(그래프 구조)만 보고 순서를 정해야 함</dd></div>
+    </dl>
+    <div class="two">
+      <div class="panel stepper" id="topoStepper"></div>
+      <div class="panel panel-pad">
+        <h3 style="margin-bottom:8px">Kahn 알고리즘</h3>
+        <ol class="points" style="padding-left:1.3em">
+          <li>커밋마다 "아직 출력 안 된 부모 수"를 셈</li>
+          <li>그 수가 0인 커밋을 큐(<code>deque</code>)에 넣음</li>
+          <li>하나 꺼내 출력하고, 자식들의 수를 1씩 줄임</li>
+          <li>0이 된 자식을 큐에 넣음 → 큐가 빌 때까지 반복</li>
+        </ol>
+        <ul class="points" style="margin-top:12px">
+          <li>Merge는 부모 <b>둘 다</b> 출력된 뒤에야 큐에 들어감</li>
+          <li>시간복잡도 O(V + E) : 커밋과 연결을 한 번씩만 봄</li>
+          <li><code>list.pop(0)</code>은 O(N)이라 <code>deque.popleft()</code> O(1) 사용</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PATH ================= -->
+<section id="path">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">PATH 15809e9 78ca51e · graph.shortest_path()</span>
+      <h2>BFS 최단 경로</h2>
+    </div>
+    <dl class="defs">
+      <div class="def"><dt>정의</dt><dd>시작점에서 가까운 노드부터 차례로 방문하는 탐색 (Breadth-First Search). 처음 닿은 거리 = 최단 거리</dd></div>
+      <div class="def"><dt>과제 요구</dt><dd>연결을 방향 없는 선으로 보고 선이 가장 적은 경로. 여러 개면 <code>hash1-&gt;hash2-&gt;...</code> 문자열이 사전순으로 가장 작은 것, 없으면 <code>No path</code></dd></div>
+    </dl>
+    <div class="two">
+      <div class="panel stepper" id="pathStepper"></div>
+      <div class="panel panel-pad">
+        <h3 style="margin-bottom:8px">두 단계로 찾음</h3>
+        <ol class="points" style="padding-left:1.3em">
+          <li><b>도착점에서 BFS</b> → 모든 커밋의 "도착점까지 남은 칸 수" 계산</li>
+          <li><b>출발점부터 이동</b> → 남은 칸 수가 1 줄어드는 이웃 중 hash가 가장 작은 것 선택</li>
+        </ol>
+        <ul class="points" style="margin-top:12px">
+          <li>도착점부터 재는 이유 : 한 칸 갈 때마다 "이 길도 최단인가"를 바로 판단 가능</li>
+          <li>매번 가장 작은 hash면 되는 이유 : hash가 모두 7자라 경로 문자열 비교 = 앞 hash부터 차례로 비교</li>
+          <li>예시의 최단 경로는 2개 (<code>…→505181a→…</code>, <code>…→e7a1f20→…</code>), <code>505181a</code> &lt; <code>e7a1f20</code>라서 앞쪽 선택</li>
+          <li>시간복잡도 O(V + E)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ANCESTORS ================= -->
+<section id="anc">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">ANCESTORS e7a1f20 · graph.find_ancestors()</span>
+      <h2>조상 탐색 : 부모를 끝까지</h2>
+    </div>
+    <dl class="defs">
+      <div class="def"><dt>정의</dt><dd>특정 커밋에서 부모 간선을 따라 도달할 수 있는 모든 커밋</dd></div>
+      <div class="def"><dt>과제 요구</dt><dd>도달 가능한 모든 조상을 빠짐없이 출력</dd></div>
+    </dl>
+    <div class="two">
+      <div class="panel stepper" id="ancStepper"></div>
+      <div class="panel panel-pad">
+        <ul class="points">
+          <li>부모 방향으로만 BFS</li>
+          <li><code>visited</code> 집합(<code>set</code>)에 이미 본 커밋을 기록 → 확인 O(1)</li>
+          <li><code>Initial commit</code>은 두 길로 닿지만 두 번째는 건너뜀 → 결과에 한 번만</li>
+          <li>가까운 조상부터 출력, 자기 자신은 제외</li>
+          <li>MERGE의 <code>Already up to date.</code> 판정(<code>is_ancestor</code>)에도 같은 함수를 씀</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= INDEX ================= -->
+<section id="index">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">SEARCH · index.py</span>
+      <h2>역색인 : 단어로 커밋을 바로 찾기</h2>
+    </div>
+    <dl class="defs">
+      <div class="def"><dt>정의</dt><dd>"단어 → 그 단어가 들어 있는 커밋 목록" 형태로 미리 저장한 색인 (책 뒤의 찾아보기)</dd></div>
+      <div class="def"><dt>과제 요구</dt><dd>모든 커밋을 순회하지 않고 후보를 바로 가져올 것. 메시지를 공백으로 나누고 소문자로 바꾼 단어를 키로. <code>keyword</code>, <code>author</code> 2종</dd></div>
+    </dl>
+    <div class="two">
+      <div class="panel panel-pad" style="display:grid;gap:14px">
+        <form class="search-in" id="idxForm">
+          <label for="idxInput" class="note">SEARCH</label>
+          <input id="idxInput" type="text" value="login" spellcheck="false" autocapitalize="off">
+        </form>
+        <p class="note">해 볼 것 : <code>LOGIN</code> (대소문자 무시), <code>add login</code> (모든 단어 포함), <code>log</code> (단어 단위라 못 찾음), <code>--author=bob</code></p>
+        <div class="cmp">
+          <div class="fast"><span class="lbl">역색인 : dict 조회</span><span class="big" id="idxLookups">1</span><span class="lbl">번 (검색어 단어 수만큼)</span></div>
+          <div><span class="lbl">전체 훑기 : 확인할 커밋</span><span class="big" id="idxScan">5</span><span class="lbl">개 (커밋이 늘수록 같이 늘어남)</span></div>
+        </div>
+        <div>
+          <div class="note" style="margin-bottom:6px">예시 커밋 5개 (색칠 = 검색 결과)</div>
+          <div class="cm-list" id="idxCommits"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="tbl-wrap">
+          <table class="idx-tbl">
+            <thead><tr><th id="idxHead">keyword_index 키</th><th>commit hash 목록</th></tr></thead>
+            <tbody id="idxTable"></tbody>
+          </table>
+        </div>
+        <div class="panel-pad"><p class="note">COMMIT 할 때마다 <code>SearchIndex.add_commit()</code>이 표를 갱신. 여러 단어는 첫 단어 목록과 나머지 단어 목록의 교집합. 시간복잡도 : 전체 훑기 O(N × 메시지 길이), 역색인 O(1) + 결과 수</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SORT ================= -->
+<section id="sort">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">LOG --sort-by=date|author · sorting.merge_sort()</span>
+      <h2>정렬 직접 구현 : 병합 정렬</h2>
+    </div>
+    <dl class="defs">
+      <div class="def"><dt>과제 요구</dt><dd><code>sorted()</code>, <code>list.sort()</code> 사용 금지, 기준을 바꿔 정렬 (테스트가 소스에 두 API가 없는지 자동 검사)</dd></div>
+      <div class="def"><dt>안정 정렬</dt><dd>기준값이 같은 데이터는 원래 순서를 유지하는 정렬</dd></div>
+      <div class="def"><dt>선택 이유</dt><dd>최악에도 O(N log N), 안정 정렬이라 같은 작성자 안에서는 "부모 먼저" 순서가 그대로</dd></div>
+    </dl>
+    <div class="two">
+      <div class="panel panel-pad" style="display:grid;gap:12px">
+        <div class="st-ctl">
+          <button class="btn primary" id="sortBtn" type="button">작성자 기준으로 정렬</button>
+          <span class="note" id="sortCap">지금 : LOG 기본 순서 (위상 정렬)</span>
+        </div>
+        <div class="sort-stage" id="sortStage"></div>
+        <p class="note">동그라미 숫자 = 정렬 전 순서. 정렬 뒤에도 Alice ①→③, Bob ②→④ 순서가 유지됨. 합칠 때 값이 같으면 왼쪽 원소를 먼저 넣기 때문 (<code>key(left[i]) &lt;= key(right[j])</code>)</p>
+      </div>
+      <div class="panel panel-pad" style="display:grid;gap:12px">
+        <h3>[보너스] BENCH : 입력 크기별 실행 시간 <span class="tag-bonus">BONUS</span></h3>
+        <div class="legend">
+          <span><i style="background:var(--s-ins)"></i>삽입 O(N²)</span>
+          <span><i style="background:var(--s-merge)"></i>병합 O(N log N)</span>
+          <span><i style="background:var(--s-quick)"></i>퀵 평균 O(N log N)</span>
+        </div>
+        <div id="benchChart" style="overflow-x:auto"></div>
+        <p class="note">Python에서 <code>bench</code>를 실행한 결과 (ms, 같은 난수 데이터). 크기가 2배일 때 삽입 정렬만 약 4배씩 늘어남</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>알고리즘</th><th>평균</th><th>최악</th><th>안정</th></tr></thead>
+            <tbody>
+              <tr><td>병합 정렬 (LOG에 사용)</td><td class="mono">O(N log N)</td><td class="mono">O(N log N)</td><td class="c ok">O</td></tr>
+              <tr><td>퀵 정렬</td><td class="mono">O(N log N)</td><td class="mono">O(N²)</td><td class="c">X</td></tr>
+              <tr><td>삽입 정렬</td><td class="mono">O(N²)</td><td class="mono">O(N²)</td><td class="c ok">O</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= BONUS ================= -->
+<section id="bonus">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">MERGE · DIFF</span>
+      <h2>보너스 기능<span class="tag-bonus">BONUS</span></h2>
+    </div>
+    <div class="two">
+      <div class="panel panel-pad" style="display:grid;gap:12px">
+        <h3>DIFF : LCS(최장 공통 부분 수열)</h3>
+        <dl class="defs" style="margin:0">
+          <div class="def"><dt>정의</dt><dd>두 목록에서 순서를 지키며 공통으로 나오는 가장 긴 부분 수열</dd></div>
+          <div class="def"><dt>구현</dt><dd><code>diff.py</code>의 <code>diff_lines()</code>. 동적 계획법 표를 채운 뒤 왼쪽 위부터 따라가며 출력. O(N × M)</dd></div>
+        </dl>
+        <div class="tbl-wrap" id="lcsTable"></div>
+        <p class="note">칸 값 = 그 줄부터 끝까지의 LCS 길이. 색칠한 칸 = 출력할 때 지나간 길</p>
+        <div class="diffout" id="diffOut"></div>
+      </div>
+      <div class="panel panel-pad" style="display:grid;gap:12px">
+        <h3>MERGE : 부모가 2개인 커밋</h3>
+        <ul class="points">
+          <li><code>parents = [현재 브랜치 커밋, 대상 브랜치 커밋]</code>인 새 커밋 생성</li>
+          <li>대상이 이미 현재 커밋의 조상이면 → <code>Already up to date.</code></li>
+          <li>자기 자신과 merge → <code>Cannot merge a branch into itself</code></li>
+          <li>LOG에는 <code>Merge: 043dbc1 15809e9</code> 처럼 부모 2개 표시</li>
+          <li>merge 뒤에는 <code>PATH</code>가 merge 커밋을 지나 더 짧아질 수 있음</li>
+        </ul>
+        <p class="note">위 실행 화면에서 순서대로 눌러 보세요</p>
+        <div class="chips" style="margin-top:0">
+          <button class="run" type="button" data-cmd="merge feature">merge feature</button>
+          <button class="run" type="button" data-cmd="log">log</button>
+          <button class="run" type="button" data-cmd="ancestors {head}">ancestors HEAD</button>
+          <button class="run" type="button" data-cmd="merge feature">merge feature (한 번 더)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= STRUCTURE ================= -->
+<section id="struct">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">minigit/</span>
+      <h2>프로젝트 구조</h2>
+      <p>위 계층이 아래 계층만 부릅니다. 알고리즘 파일은 출력이나 저장소 상태를 몰라서 따로 테스트할 수 있습니다.</p>
+    </div>
+    <div class="two">
+      <div class="layers">
+        <div class="layer"><div class="who">시작점</div><div class="boxes">
+          <div class="fbox"><span class="f">main.py</span><span class="d">Python 버전 확인 후 REPL 실행</span></div>
+        </div></div>
+        <div class="down" aria-hidden="true">↓</div>
+        <div class="layer"><div class="who">입력 해석 · 출력</div><div class="boxes">
+          <div class="fbox"><span class="f">cli.py</span><span class="d">shlex로 따옴표 처리, 명령어 → 함수 dict, 출력 문자열 생성</span></div>
+        </div></div>
+        <div class="down" aria-hidden="true">↓</div>
+        <div class="layer"><div class="who">저장소 상태</div><div class="boxes">
+          <div class="fbox"><span class="f">repository.py</span><span class="d">commits dict, branches, HEAD, 사용자, hash 생성, merge, 에러</span></div>
+          <div class="fbox"><span class="f">commit.py</span><span class="d">Commit 데이터클래스 (hash, message, author, timestamp, parents)</span></div>
+        </div></div>
+        <div class="down" aria-hidden="true">↓</div>
+        <div class="layer"><div class="who">알고리즘만</div><div class="boxes">
+          <div class="fbox"><span class="f">graph.py</span><span class="d">위상 정렬, 최단 경로, 조상</span></div>
+          <div class="fbox"><span class="f">sorting.py</span><span class="d">병합 · 퀵 · 삽입 정렬</span></div>
+          <div class="fbox"><span class="f">index.py</span><span class="d">키워드 · 작성자 역색인</span></div>
+          <div class="fbox bonus"><span class="f">diff.py</span><span class="d">[보너스] LCS 줄 비교</span></div>
+          <div class="fbox bonus"><span class="f">benchmark.py</span><span class="d">[보너스] 정렬 속도 비교</span></div>
+        </div></div>
+      </div>
+      <div class="panel panel-pad">
+        <h3 style="margin-bottom:8px"><code>commit "Add login"</code> 입력 시</h3>
+        <ol class="flow">
+          <li><span class="fn">run()</span><span class="what">input()으로 한 줄 읽기, exit / quit이면 종료</span></li>
+          <li><span class="fn">execute()</span><span class="what">try로 감싸 에러가 나도 메시지만 출력</span></li>
+          <li><span class="fn">parse()</span><span class="what">shlex.split → ["commit", "Add login"], 명령어는 소문자로</span></li>
+          <li><span class="fn">handlers</span><span class="what">"commit" → cmd_commit (없으면 Unknown command)</span></li>
+          <li><span class="fn">cmd_commit()</span><span class="what">인자가 정확히 1개인지 확인 (아니면 Invalid args)</span></li>
+          <li><span class="fn">Repository.commit()</span><span class="what">HEAD 커밋을 부모로, 7자리 hash 생성, commits에 저장, 브랜치 이동, 역색인 등록</span></li>
+          <li><span class="fn">cmd_commit()</span><span class="what">"[main 3fa91c2] Add login" 문자열 생성</span></li>
+          <li><span class="fn">run()</span><span class="what">출력 후 다시 프롬프트</span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CHECKLIST ================= -->
+<section id="check">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">README 11장 요약</span>
+      <h2>요구사항 체크리스트</h2>
+      <p>명령 버튼을 누르면 맨 위 실행 화면에서 바로 실행됩니다.</p>
+    </div>
+    <div class="panel tbl-wrap">
+      <table>
+        <thead><tr><th>요구사항</th><th>확인</th><th>실행</th><th>구현 위치</th><th>보기</th></tr></thead>
+        <tbody>
+          <tr class="grp"><td colspan="5">기능</td></tr>
+          <tr><td>INIT : main 브랜치 생성, HEAD · 사용자 설정</td><td class="ok">✓</td><td><button class="run" type="button" data-cmd='init "Alice"'>init</button></td><td class="mono">repository.init</td><td><a href="#play">실행</a></td></tr>
+          <tr><td>BRANCH / SWITCH : HEAD 커밋을 가리키는 브랜치, HEAD 이동</td><td class="ok">✓</td><td><button class="run" type="button" data-cmd="branch">branch</button></td><td class="mono">create_branch · switch</td><td><a href="#play">실행</a></td></tr>
+          <tr><td>COMMIT : HEAD를 부모로 새 커밋, hash 출력, 역색인 갱신</td><td class="ok">✓</td><td><button class="run" type="button" data-cmd='commit "Fix login bug"'>commit</button></td><td class="mono">repository.commit</td><td><a href="#struct">흐름</a></td></tr>
+          <tr><td>LOG : 부모가 항상 자식보다 먼저</td><td class="ok">✓</td><td><button class="run" type="button" data-cmd="log">log</button></td><td class="mono">graph.topological_sort</td><td><a href="#topo">위상 정렬</a></td></tr>
+          <tr><td>LOG --sort-by=date|author, 정렬 직접 구현</td><td class="ok">✓</td><td><button class="run" type="button" data-cmd="log --sort-by=date">--sort-by=date</button></td><td class="mono">sorting.merge_sort</td><td><a href="#sort">정렬</a></td></tr>
+          <tr><td>PATH : 무방향 최단, 사전순 최소, 없으면 No path</td><td class="ok">✓</td><td><button class="run" type="button" data-cmd="path {msg:Add login feature} {msg:Add payment feature}">path</button></td><td class="mono">graph.shortest_path</td><td><a href="#path">BFS</a></td></tr>
+          <tr><td>ANCESTORS : 모든 조상을 빠짐없이</td><td class="ok">✓</td><td><button class="run" type="button" data-cmd="ancestors {head}">ancestors</button></td><td class="mono">graph.find_ancestors</td><td><a href="#anc">조상</a></td></tr>
+          <tr><td>SEARCH keyword / --author, 순회 없이 역색인</td><td class="ok">✓</td><td><button class="run" type="button" data-cmd="search --author=alice">--author</button></td><td class="mono">index.SearchIndex</td><td><a href="#index">역색인</a></td></tr>
+          <tr class="grp"><td colspan="5">자료구조 · 입력 규칙</td></tr>
+          <tr><td>커밋 필드 hash, message, author, timestamp, parents / 부모 0개 이상, DAG</td><td class="ok">✓</td><td></td><td class="mono">commit.Commit</td><td><a href="#dag">DAG</a></td></tr>
+          <tr><td>hash로 빠르게 조회(해시맵), 세션 안에서 hash 중복 없음</td><td class="ok">✓</td><td></td><td class="mono">repository._new_hash</td><td><a href="#dag">DAG</a></td></tr>
+          <tr><td>명령어 대소문자 무시, 공백 값은 따옴표, 옵션 --key=value</td><td class="ok">✓</td><td><button class="run" type="button" data-cmd='SEARCH "LOGIN"'>SEARCH "LOGIN"</button></td><td class="mono">cli.parse</td><td><a href="#errors">예외</a></td></tr>
+          <tr><td>표준 에러 메시지, 에러가 나도 프로그램 계속</td><td class="ok">✓</td><td><button class="run" type="button" data-cmd="switch nope">switch nope</button></td><td class="mono">cli.execute</td><td><a href="#errors">예외</a></td></tr>
+          <tr class="grp"><td colspan="5">제약</td></tr>
+          <tr><td>그래프 · 정렬 라이브러리 미사용 (큐는 표준 deque만)</td><td class="ok">✓</td><td></td><td class="mono">tests/test_minigit.py</td><td></td></tr>
+          <tr><td>탐색 / 정렬 / 인덱싱 독립 파일, 주요 함수 docstring</td><td class="ok">✓</td><td></td><td class="mono">graph · sorting · index</td><td><a href="#struct">구조</a></td></tr>
+          <tr class="grp"><td colspan="5">보너스</td></tr>
+          <tr><td>MERGE : 부모 2개 merge 커밋 <span class="tag-bonus">BONUS</span></td><td class="ok">✓</td><td><button class="run" type="button" data-cmd="merge feature">merge</button></td><td class="mono">repository.merge</td><td><a href="#bonus">MERGE</a></td></tr>
+          <tr><td>DIFF : 줄 단위 추가 / 삭제 / 공통 <span class="tag-bonus">BONUS</span></td><td class="ok">✓</td><td><button class="run" type="button" data-cmd="diff a.txt b.txt">diff</button></td><td class="mono">diff.diff_lines</td><td><a href="#bonus">LCS</a></td></tr>
+          <tr><td>정렬 2개 이상 + 실행 시간 비교 <span class="tag-bonus">BONUS</span></td><td class="ok">✓</td><td><button class="run" type="button" data-cmd="bench">bench</button></td><td class="mono">benchmark.run_benchmark</td><td><a href="#sort">BENCH</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ERRORS ================= -->
+<section id="errors">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="cmd">MiniGitError → execute()에서 잡아 메시지만 출력</span>
+      <h2>예외 처리</h2>
+      <p>어떤 입력이 와도 멈추지 않고 다음 입력을 받습니다.</p>
+    </div>
+    <div class="panel tbl-wrap">
+      <table>
+        <thead><tr><th>상황</th><th>입력 (눌러서 실행)</th><th>출력</th></tr></thead>
+        <tbody>
+          <tr><td>공백이 있는데 따옴표 없음</td><td><button class="run" type="button" data-cmd="commit Add login">commit Add login</button></td><td class="mono">Invalid args</td></tr>
+          <tr><td>따옴표를 닫지 않음</td><td><button class="run" type="button" data-cmd='commit "unclosed'>commit "unclosed</button></td><td class="mono">Invalid args</td></tr>
+          <tr><td>잘못된 옵션</td><td><button class="run" type="button" data-cmd="log --sort-by=size">log --sort-by=size</button></td><td class="mono">Invalid args</td></tr>
+          <tr><td>없는 브랜치</td><td><button class="run" type="button" data-cmd="switch nope">switch nope</button></td><td class="mono">Unknown branch: nope</td></tr>
+          <tr><td>없는 커밋</td><td><button class="run" type="button" data-cmd="ancestors zzz">ancestors zzz</button></td><td class="mono">Unknown commit: zzz</td></tr>
+          <tr><td>없는 명령어</td><td><button class="run" type="button" data-cmd="hello">hello</button></td><td class="mono">Unknown command: hello</td></tr>
+          <tr><td>이미 있는 브랜치</td><td><button class="run" type="button" data-cmd="branch main">branch main</button></td><td class="mono">Branch already exists: main</td></tr>
+          <tr><td>자기 자신과 merge</td><td><button class="run" type="button" data-cmd="merge main">merge main</button></td><td class="mono">Cannot merge a branch into itself</td></tr>
+          <tr><td>없는 파일로 diff</td><td><button class="run" type="button" data-cmd="diff a.txt nope.txt">diff a.txt nope.txt</button></td><td class="mono">Cannot read file: nope.txt</td></tr>
+          <tr><td>INIT 전에 다른 명령</td><td class="note">초기화 후 <code>log</code></td><td class="mono">Not initialized. Use INIT &lt;user_name&gt; first</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">실행 화면은 파이썬 코드(<code>minigit/</code>)를 같은 규칙으로 자바스크립트에 옮긴 것입니다. 실제 평가는 <code>python main.py</code>와 <code>python -m unittest discover tests -v</code>로 확인할 수 있습니다. 질문별 정리는 <a href="evaluation-guide.html">예상 질문 가이드</a>에 있습니다.</div>
+</footer>
+
+<script>
+/* ================= core : minigit/ 파이썬 코드를 같은 규칙으로 옮김 ================= */
+
+function sha1(str) {
+  const bytes = new TextEncoder().encode(str);
+  const len = bytes.length;
+  const total = Math.ceil((len + 9) / 64) * 64;
+  const buf = new Uint8Array(total);
+  buf.set(bytes);
+  buf[len] = 0x80;
+  const dv = new DataView(buf.buffer);
+  dv.setUint32(total - 8, Math.floor((len * 8) / 4294967296));
+  dv.setUint32(total - 4, (len * 8) >>> 0);
+  let h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476, h4 = 0xc3d2e1f0;
+  const w = new Uint32Array(80);
+  for (let off = 0; off < total; off += 64) {
+    for (let i = 0; i < 16; i++) w[i] = dv.getUint32(off + i * 4);
+    for (let i = 16; i < 80; i++) { const x = w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16]; w[i] = (x << 1) | (x >>> 31); }
+    let a = h0, b = h1, c = h2, d = h3, e = h4;
+    for (let i = 0; i < 80; i++) {
+      let f, k;
+      if (i < 20) { f = (b & c) | (~b & d); k = 0x5a827999; }
+      else if (i < 40) { f = b ^ c ^ d; k = 0x6ed9eba1; }
+      else if (i < 60) { f = (b & c) | (b & d) | (c & d); k = 0x8f1bbcdc; }
+      else { f = b ^ c ^ d; k = 0xca62c1d6; }
+      const t = (((a << 5) | (a >>> 27)) + f + e + k + w[i]) >>> 0;
+      e = d; d = c; c = ((b << 30) | (b >>> 2)) >>> 0; b = a; a = t;
+    }
+    h0 = (h0 + a) >>> 0; h1 = (h1 + b) >>> 0; h2 = (h2 + c) >>> 0; h3 = (h3 + d) >>> 0; h4 = (h4 + e) >>> 0;
+  }
+  return [h0, h1, h2, h3, h4].map(h => h.toString(16).padStart(8, "0")).join("");
+}
+
+class MiniGitError extends Error {}
+
+/* ---- index.py ---- */
+function tokenize(text) { return text.split(/\s+/).filter(Boolean).map(t => t.toLowerCase()); }
+class InvertedIndex {
+  constructor() { this.postings = new Map(); }
+  add(key, h) {
+    key = key.toLowerCase();
+    if (!this.postings.has(key)) this.postings.set(key, []);
+    const list = this.postings.get(key);
+    if (!list.includes(h)) list.push(h);
+  }
+  get(key) { return [...(this.postings.get(key.toLowerCase()) || [])]; }
+}
+class SearchIndex {
+  constructor() { this.keyword = new InvertedIndex(); this.author = new InvertedIndex(); }
+  addCommit(h, message, author) { for (const t of tokenize(message)) this.keyword.add(t, h); this.author.add(author, h); }
+  searchKeyword(keyword) {
+    const tokens = tokenize(keyword);
+    if (!tokens.length) return [];
+    let result = this.keyword.get(tokens[0]);
+    for (const t of tokens.slice(1)) { const others = new Set(this.keyword.get(t)); result = result.filter(h => others.has(h)); }
+    return result;
+  }
+  searchAuthor(a) { return this.author.get(a); }
+}
+
+/* ---- graph.py ---- */
+function buildChildren(G) {
+  const ch = new Map();
+  for (const h of G.keys()) ch.set(h, []);
+  for (const c of G.values()) for (const p of c.parents) ch.get(p).push(c.hash);
+  return ch;
+}
+function topologicalSort(G, on) {
+  const children = buildChildren(G);
+  const indeg = new Map([...G].map(([h, c]) => [h, c.parents.length]));
+  const queue = [...G.keys()].filter(h => indeg.get(h) === 0);
+  const order = [];
+  on && on({ type: "start", indeg: new Map(indeg), queue: [...queue], order: [] });
+  while (queue.length) {
+    const cur = queue.shift();
+    order.push(cur);
+    const pushed = [];
+    for (const child of children.get(cur)) {
+      indeg.set(child, indeg.get(child) - 1);
+      if (indeg.get(child) === 0) { queue.push(child); pushed.push(child); }
+    }
+    on && on({ type: "pop", cur, children: children.get(cur), pushed, indeg: new Map(indeg), queue: [...queue], order: [...order] });
+  }
+  if (order.length !== G.size) throw new Error("Commit graph has a cycle");
+  return order;
+}
+function undirectedNeighbors(G) {
+  const nb = new Map();
+  for (const h of G.keys()) nb.set(h, []);
+  for (const c of G.values()) for (const p of c.parents) { nb.get(c.hash).push(p); nb.get(p).push(c.hash); }
+  return nb;
+}
+function bfsDistances(nb, start, on) {
+  const dist = new Map([[start, 0]]);
+  const queue = [start];
+  on && on({ type: "bfs-start", dist: new Map(dist), queue: [...queue] });
+  while (queue.length) {
+    const cur = queue.shift();
+    const found = [];
+    for (const nxt of nb.get(cur)) if (!dist.has(nxt)) { dist.set(nxt, dist.get(cur) + 1); queue.push(nxt); found.push(nxt); }
+    on && on({ type: "bfs-pop", cur, found, dist: new Map(dist), queue: [...queue] });
+  }
+  return dist;
+}
+function shortestPath(G, start, end, on) {
+  const nb = undirectedNeighbors(G);
+  const dist = bfsDistances(nb, end, on);
+  if (!dist.has(start)) return null;
+  const path = [start];
+  let cur = start;
+  on && on({ type: "walk-start", dist, path: [...path] });
+  while (cur !== end) {
+    let best = null;
+    const cands = [];
+    for (const nxt of nb.get(cur)) if (dist.get(nxt) === dist.get(cur) - 1) { cands.push(nxt); if (best === null || nxt < best) best = nxt; }
+    const from = cur;
+    cur = best;
+    path.push(cur);
+    on && on({ type: "walk", from, cands, best, dist, path: [...path] });
+  }
+  return path;
+}
+function findAncestors(G, h, on) {
+  const visited = new Set([h]);
+  const queue = [h];
+  const anc = [];
+  on && on({ type: "start", visited: new Set(visited), queue: [...queue], anc: [] });
+  while (queue.length) {
+    const cur = queue.shift();
+    for (const p of G.get(cur).parents) {
+      const added = !visited.has(p);
+      if (added) { visited.add(p); anc.push(p); queue.push(p); }
+      on && on({ type: "check", cur, parent: p, added, visited: new Set(visited), queue: [...queue], anc: [...anc] });
+    }
+  }
+  return anc;
+}
+function isAncestor(G, a, d) { return a === d || findAncestors(G, d).includes(a); }
+
+/* ---- sorting.py ---- */
+function cmp(a, b) {
+  if (Array.isArray(a)) { for (let i = 0; i < a.length; i++) { const c = cmp(a[i], b[i]); if (c) return c; } return 0; }
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+const identity = x => x;
+function mergeSort(items, key = identity) {
+  if (items.length <= 1) return items.slice();
+  const mid = Math.floor(items.length / 2);
+  return mergeTwo(mergeSort(items.slice(0, mid), key), mergeSort(items.slice(mid), key), key);
+}
+function mergeTwo(left, right, key) {
+  const out = []; let i = 0, j = 0;
+  while (i < left.length && j < right.length) {
+    if (cmp(key(left[i]), key(right[j])) <= 0) out.push(left[i++]); else out.push(right[j++]);
+  }
+  return out.concat(left.slice(i), right.slice(j));
+}
+function quickSort(items, key = identity) {
+  if (items.length <= 1) return items.slice();
+  const pivot = key(items[Math.floor(items.length / 2)]);
+  const less = [], equal = [], greater = [];
+  for (const it of items) { const c = cmp(key(it), pivot); if (c < 0) less.push(it); else if (c > 0) greater.push(it); else equal.push(it); }
+  return quickSort(less, key).concat(equal, quickSort(greater, key));
+}
+function insertionSort(items, key = identity) {
+  const r = items.slice();
+  for (let i = 1; i < r.length; i++) {
+    const cur = r[i], ck = key(cur); let j = i - 1;
+    while (j >= 0 && cmp(key(r[j]), ck) > 0) { r[j + 1] = r[j]; j--; }
+    r[j + 1] = cur;
+  }
+  return r;
+}
+
+/* ---- repository.py ---- */
+class Repository {
+  constructor() {
+    this.initialized = false; this.user = ""; this.commits = new Map(); this.branches = new Map();
+    this.head = ""; this.index = new SearchIndex(); this.counter = 0;
+  }
+  init(user) {
+    if (this.initialized) { this.user = user; return false; }
+    this.initialized = true; this.user = user; this.branches = new Map([["main", null]]); this.head = "main";
+    return true;
+  }
+  headCommit() { return this.branches.get(this.head) ?? null; }
+  createBranch(name) {
+    this.req();
+    if (this.branches.has(name)) throw new MiniGitError(`Branch already exists: ${name}`);
+    if (this.headCommit() === null) throw new MiniGitError("No commits yet");
+    this.branches.set(name, this.headCommit());
+  }
+  listBranches() { this.req(); return new Map(this.branches); }
+  switch(name) {
+    this.req();
+    if (!this.branches.has(name)) throw new MiniGitError(`Unknown branch: ${name}`);
+    this.head = name;
+  }
+  commit(message) { this.req(); const p = this.headCommit(); return this.create(message, p !== null ? [p] : []); }
+  merge(branch) {
+    this.req();
+    if (!this.branches.has(branch)) throw new MiniGitError(`Unknown branch: ${branch}`);
+    if (branch === this.head) throw new MiniGitError("Cannot merge a branch into itself");
+    const cur = this.headCommit(), target = this.branches.get(branch);
+    if (cur === null || target === null) throw new MiniGitError("No commits yet");
+    if (isAncestor(this.commits, target, cur)) return null;
+    return this.create(`Merge branch '${branch}' into ${this.head}`, [cur, target]);
+  }
+  create(message, parents) {
+    const ts = new Date();
+    const hash = this.newHash(message, ts);
+    this.counter++;
+    const c = { hash, message, author: this.user, timestamp: ts, parents, branch: this.head, seq: this.counter };
+    this.commits.set(hash, c);
+    this.branches.set(this.head, hash);
+    this.index.addCommit(hash, message, this.user);
+    return c;
+  }
+  newHash(message, ts) {
+    for (let nonce = 0; ; nonce++) {
+      const cand = sha1(`${this.counter}|${nonce}|${message}|${this.user}|${ts.toISOString()}`).slice(0, 7);
+      if (!this.commits.has(cand)) return cand;
+    }
+  }
+  getCommit(h) { if (!this.commits.has(h)) throw new MiniGitError(`Unknown commit: ${h}`); return this.commits.get(h); }
+  log(sortBy = null) {
+    this.req();
+    const ordered = topologicalSort(this.commits).map(h => this.commits.get(h));
+    if (!sortBy) return ordered;
+    if (sortBy === "date") return mergeSort(ordered, c => [c.timestamp.getTime(), c.seq]);
+    if (sortBy === "author") return mergeSort(ordered, c => c.author.toLowerCase());
+    throw new MiniGitError("Invalid args");
+  }
+  path(s, e) { this.req(); this.getCommit(s); this.getCommit(e); return shortestPath(this.commits, s, e); }
+  ancestors(h) { this.req(); this.getCommit(h); return findAncestors(this.commits, h).map(x => this.commits.get(x)); }
+  searchKeyword(k) { this.req(); return this.index.searchKeyword(k).map(h => this.commits.get(h)); }
+  searchAuthor(a) { this.req(); return this.index.searchAuthor(a).map(h => this.commits.get(h)); }
+  req() { if (!this.initialized) throw new MiniGitError("Not initialized. Use INIT <user_name> first"); }
+}
+
+/* ---- diff.py ---- */
+function lcsTable(a, b) {
+  const n = a.length, m = b.length;
+  const t = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+    t[i][j] = a[i] === b[j] ? t[i + 1][j + 1] + 1 : Math.max(t[i + 1][j], t[i][j + 1]);
+  return t;
+}
+function diffLines(a, b, trace) {
+  const t = lcsTable(a, b), out = [];
+  let i = 0, j = 0;
+  while (i < a.length && j < b.length) {
+    trace && trace.push([i, j]);
+    if (a[i] === b[j]) { out.push(`  ${a[i]}`); i++; j++; }
+    else if (t[i + 1][j] >= t[i][j + 1]) { out.push(`- ${a[i]}`); i++; }
+    else { out.push(`+ ${b[j]}`); j++; }
+  }
+  for (; i < a.length; i++) out.push(`- ${a[i]}`);
+  for (; j < b.length; j++) out.push(`+ ${b[j]}`);
+  return out;
+}
+const VFILES = { "a.txt": "apple\nbanana\ncherry", "b.txt": "apple\ncherry\ndragonfruit" };
+
+/* ---- benchmark.py ---- */
+function mulberry32(a) { return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function runBenchmark(sizes) {
+  sizes = sizes && sizes.length ? sizes : [100, 500, 1000, 2000];
+  const algs = { merge: mergeSort, quick: quickSort, insertion: insertionSort };
+  const rng = mulberry32(42);
+  const lines = ["size".padStart(8) + Object.keys(algs).map(n => n.padStart(12)).join("") + "   (ms)"];
+  for (const size of sizes) {
+    const data = Array.from({ length: size }, () => Math.floor(rng() * (size * 10 + 1)));
+    let row = String(size).padStart(8);
+    for (const f of Object.values(algs)) { const t0 = performance.now(); f(data); row += ((performance.now() - t0)).toFixed(2).padStart(12); }
+    lines.push(row);
+  }
+  return lines;
+}
+
+/* ---- cli.py ---- */
+function shlexSplit(s) {
+  const out = []; let cur = "", inTok = false, q = null;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (q === "'") { if (ch === "'") q = null; else cur += ch; continue; }
+    if (q === '"') {
+      if (ch === '"') q = null;
+      else if (ch === "\\" && i + 1 < s.length && '\\"$`'.includes(s[i + 1])) cur += s[++i];
+      else cur += ch;
+      continue;
+    }
+    if (/\s/.test(ch)) { if (inTok) { out.push(cur); cur = ""; inTok = false; } continue; }
+    inTok = true;
+    if (ch === "'" || ch === '"') { q = ch; continue; }
+    if (ch === "\\") { if (i + 1 >= s.length) throw new Error("No escaped character"); cur += s[++i]; continue; }
+    cur += ch;
+  }
+  if (q) throw new Error("No closing quotation");
+  if (inTok) out.push(cur);
+  return out;
+}
+function parse(line) {
+  let tokens;
+  try { tokens = shlexSplit(line); } catch { throw new MiniGitError("Invalid args"); }
+  if (!tokens.length) return ["", []];
+  return [tokens[0].toLowerCase(), tokens.slice(1)];
+}
+const p2 = n => String(n).padStart(2, "0");
+function timeStr(d) { return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; }
+function formatCommit(c, showBranch = true) {
+  let header = `commit ${c.hash} (${c.author}, ${timeStr(c.timestamp)})`;
+  if (showBranch) header += ` [${c.branch}]`;
+  if (c.parents.length > 1) header += ` Merge: ${c.parents.join(" ")}`;
+  return [header, c.message];
+}
+function formatCommitList(list) {
+  if (!list.length) return ["No commits found"];
+  return [`Found ${list.length} ${list.length === 1 ? "commit" : "commits"}:`, ...list.map(c => `- ${c.hash}: ${c.message}`)];
+}
+function expect(args, n) { if (args.length !== n) throw new MiniGitError("Invalid args"); }
+const HELP_TEXT = `Commands (case-insensitive, quote arguments that contain spaces):
+  INIT <user_name>                 Initialize repository (main branch)
+  BRANCH [<branch_name>]           Create a branch at HEAD (no arg: list branches)
+  SWITCH <branch_name>             Move HEAD to a branch
+  COMMIT <message>                 Create a commit on the current branch
+  LOG [--sort-by=date|author]      Show commits (default: parents before children)
+  PATH <commit1> <commit2>         Shortest path between two commits
+  ANCESTORS <commit_hash>          All ancestors of a commit
+  SEARCH <keyword>                 Commits whose message contains the keyword
+  SEARCH --author=<name>           Commits by an author
+  MERGE <branch_name>              (bonus) Create a merge commit
+  DIFF <file1> <file2>             (bonus) Line-by-line file comparison
+  BENCH [<size> ...]               (bonus) Compare sorting algorithm speed
+  HELP                             Show this help
+  EXIT | QUIT                      Quit`;
+
+class MiniGitCLI {
+  constructor() {
+    this.repo = new Repository();
+    this.hl = null;
+    this.handlers = new Map(Object.entries({
+      init: this.cmdInit, branch: this.cmdBranch, switch: this.cmdSwitch, commit: this.cmdCommit,
+      log: this.cmdLog, path: this.cmdPath, ancestors: this.cmdAncestors, search: this.cmdSearch,
+      merge: this.cmdMerge, diff: this.cmdDiff, bench: this.cmdBench, help: this.cmdHelp,
+    }));
+  }
+  execute(line) {
+    this.hl = null;
+    try {
+      const [command, args] = parse(line);
+      if (!command) return [];
+      const h = this.handlers.get(command);
+      if (!h) return [`Unknown command: ${command}`];
+      return h.call(this, args);
+    } catch (e) {
+      if (e instanceof MiniGitError) return [e.message];
+      throw e;
+    }
+  }
+  cmdInit(args) {
+    expect(args, 1);
+    const created = this.repo.init(args[0]);
+    return [created ? "Initialized repository." : "Reinitialized repository (history kept).", `Current branch: ${this.repo.head}`, `Current user: ${this.repo.user}`];
+  }
+  cmdBranch(args) {
+    if (!args.length) return [...this.repo.listBranches()].map(([n, c]) => `${n === this.repo.head ? "*" : " "} ${n} -> ${c || "(no commits)"}`);
+    expect(args, 1);
+    this.repo.createBranch(args[0]);
+    return [`Created branch: ${args[0]}`];
+  }
+  cmdSwitch(args) { expect(args, 1); this.repo.switch(args[0]); return [`Switched to branch: ${args[0]}`]; }
+  cmdCommit(args) {
+    expect(args, 1);
+    const c = this.repo.commit(args[0]);
+    this.hl = { kind: "new", nodes: [c.hash], cap: "새 커밋 : 현재 브랜치 이름표가 새 커밋으로 이동" };
+    return [`[${c.branch} ${c.hash}] ${c.message}`];
+  }
+  cmdLog(args) {
+    let sortBy = null;
+    if (args.length) {
+      expect(args, 1);
+      const eq = args[0].indexOf("=");
+      const option = eq < 0 ? args[0] : args[0].slice(0, eq);
+      const value = eq < 0 ? "" : args[0].slice(eq + 1);
+      if (option.toLowerCase() !== "--sort-by" || !["date", "author"].includes(value.toLowerCase())) throw new MiniGitError("Invalid args");
+      sortBy = value.toLowerCase();
+    }
+    const commits = this.repo.log(sortBy);
+    if (!commits.length) return ["No commits yet"];
+    this.hl = { kind: "log", order: commits.map(c => c.hash), cap: sortBy ? `LOG --sort-by=${sortBy} : 숫자 = 정렬 후 출력 순서` : "LOG : 숫자 = 출력 순서 (부모가 항상 먼저)" };
+    return commits.flatMap(c => formatCommit(c, sortBy === null));
+  }
+  cmdPath(args) {
+    expect(args, 2);
+    const p = this.repo.path(args[0], args[1]);
+    if (p === null) { this.hl = { kind: "path", nodes: [args[0], args[1]], edges: [], cap: "PATH : 연결된 길이 없음" }; return ["No path"]; }
+    this.hl = { kind: "path", nodes: p, edges: p.slice(1).map((h, i) => [p[i], h]), cap: "PATH : 굵은 선 = 최단 경로 (방향 무시)" };
+    return ["Path: " + p.join(" -> ")];
+  }
+  cmdAncestors(args) {
+    expect(args, 1);
+    const a = this.repo.ancestors(args[0]);
+    this.hl = { kind: "anc", origin: args[0], nodes: [args[0], ...a.map(c => c.hash)], cap: "ANCESTORS : 점선 = 시작 커밋, 진하게 = 조상" };
+    if (!a.length) return [`No ancestors of ${args[0]}`];
+    return [`Ancestors of ${args[0]} (${a.length}):`, ...a.map(c => `- ${c.hash}: ${c.message}`)];
+  }
+  cmdSearch(args) {
+    expect(args, 1);
+    const arg = args[0];
+    let res;
+    if (arg.toLowerCase().startsWith("--author=")) {
+      const name = arg.slice(arg.indexOf("=") + 1);
+      if (!name) throw new MiniGitError("Invalid args");
+      res = this.repo.searchAuthor(name);
+    } else {
+      if (arg.startsWith("--")) throw new MiniGitError("Invalid args");
+      res = this.repo.searchKeyword(arg);
+    }
+    this.hl = { kind: "search", nodes: res.map(c => c.hash), cap: `SEARCH : 진하게 = 역색인에서 꺼낸 커밋 ${res.length}개` };
+    return formatCommitList(res);
+  }
+  cmdMerge(args) {
+    expect(args, 1);
+    const c = this.repo.merge(args[0]);
+    if (c === null) return ["Already up to date."];
+    this.hl = { kind: "new", nodes: [c.hash], cap: "MERGE : 부모가 2개인 커밋 (이중 원)" };
+    return [`[${c.branch} ${c.hash}] ${c.message}`];
+  }
+  cmdDiff(args) {
+    expect(args, 2);
+    for (const f of args) if (!(f in VFILES)) throw new MiniGitError(`Cannot read file: ${f}`);
+    const lines = diffLines(VFILES[args[0]].split("\n"), VFILES[args[1]].split("\n"));
+    return lines.length ? lines : ["(both files are empty)"];
+  }
+  cmdBench(args) {
+    const sizes = args.map(a => (/^[+-]?\d+$/.test(a.trim()) ? parseInt(a, 10) : NaN));
+    if (sizes.some(n => Number.isNaN(n) || n <= 0)) throw new MiniGitError("Invalid args");
+    if (sizes.some(n => n > 5000)) return ["(브라우저 데모에서는 크기 5000 이하만 실행)"];
+    return [...runBenchmark(sizes), "(브라우저 JS로 잰 값, Python 결과는 '정렬' 섹션 그래프)"];
+  }
+  cmdHelp() { return HELP_TEXT.split("\n"); }
+}
+</script>
+
+<script>
+/* ================= UI ================= */
+const $ = (sel, root = document) => root.querySelector(sel);
+const SVGNS = "http://www.w3.org/2000/svg";
+function S(tag, attrs = {}, parent) {
+  const el = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  if (parent) parent.appendChild(el);
+  return el;
+}
+function T(tag, attrs, text, parent) { const el = S(tag, attrs, parent); el.textContent = text; return el; }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]); }
+const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const LANE_COLORS = ["var(--main)", "var(--feature)", "var(--lane3)", "var(--lane4)"];
+
+/* ---------- terminal ---------- */
+let cli = new MiniGitCLI();
+const out = $("#termOut"), input = $("#termInput");
+const history = []; let hIdx = 0;
+const ERR_RE = /^(Invalid args|Unknown |Not initialized|Branch already exists|No commits yet|Cannot |No path)/;
+
+function printLine(text, cls) {
+  const div = document.createElement("div");
+  if (cls) div.className = cls;
+  div.innerHTML = cls === "sys" ? esc(text) : esc(text).replace(/\b[0-9a-f]{7}\b/g, m => `<span class="h">${m}</span>`);
+  out.appendChild(div);
+}
+function runLine(line) {
+  const echo = document.createElement("div");
+  echo.className = "cmd";
+  echo.innerHTML = `<span class="p">mini-git&gt;</span> ${esc(line)}`;
+  out.appendChild(echo);
+  if (["exit", "quit"].includes(line.trim().toLowerCase())) {
+    printLine("(프로세스 종료 → RAM의 커밋이 모두 사라짐. 새 세션 시작)", "sys");
+    cli = new MiniGitCLI();
+  } else {
+    for (const l of cli.execute(line)) printLine(l, ERR_RE.test(l) ? "err" : "");
+  }
+  out.scrollTop = out.scrollHeight;
+  drawRepo();
+}
+$("#termForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const line = input.value;
+  input.value = "";
+  if (line.trim()) { history.push(line); }
+  hIdx = history.length;
+  runLine(line);
+});
+input.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp" && hIdx > 0) { hIdx--; input.value = history[hIdx]; e.preventDefault(); }
+  else if (e.key === "ArrowDown") { hIdx = Math.min(history.length, hIdx + 1); input.value = history[hIdx] || ""; e.preventDefault(); }
+});
+
+function resolveCmd(tpl) {
+  const repo = cli.repo;
+  return tpl.replace(/\{([^}]+)\}/g, (m, key) => {
+    if (key === "head") return repo.initialized ? (repo.headCommit() || "none") : "none";
+    if (key.startsWith("msg:")) {
+      const msg = key.slice(4);
+      for (const c of repo.commits.values()) if (c.message === msg) return c.hash;
+      return "none";
+    }
+    return m;
+  });
+}
+
+let busy = false;
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+async function typeAndRun(line) {
+  if (reduced) { runLine(line); return; }
+  input.value = "";
+  for (const ch of line) { input.value += ch; await sleep(16); }
+  await sleep(120);
+  input.value = "";
+  runLine(line);
+}
+async function runChip(tpl) {
+  if (busy) return;
+  busy = true;
+  const r = $("#term").getBoundingClientRect();
+  if (r.top < 0 || r.bottom > window.innerHeight) $("#play").scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
+  await sleep(reduced ? 0 : 250);
+  await typeAndRun(resolveCmd(tpl));
+  busy = false;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("button.run");
+  if (b) runChip(b.dataset.cmd);
+});
+
+const SCENE_BASE = ['init "Alice"', 'commit "Initial commit"', "branch feature", "switch feature", 'commit "Add login feature"', "switch main", 'commit "Add payment feature"'];
+const SCENE_FULL = [
+  ...SCENE_BASE, "log",
+  "path {msg:Add login feature} {msg:Add payment feature}",
+  'search "login"',
+  'init "Bob"', 'commit "Fix login bug"', "search --author=bob", "log --sort-by=author",
+  "merge feature", "log", "ancestors {head}", "merge feature",
+];
+function reset(silentBase) {
+  cli = new MiniGitCLI();
+  out.innerHTML = "";
+  printLine("Mini Git - type HELP for commands, EXIT to quit", "sys");
+  if (silentBase) {
+    printLine("(README 7-1 시연 명령을 미리 실행해 둔 상태)", "sys");
+    for (const l of SCENE_BASE) runLine(l);
+    cli.hl = null;
+  }
+  drawRepo();
+}
+$("#btnReset").addEventListener("click", () => { if (!busy) { reset(false); input.focus(); } });
+$("#btnDemo").addEventListener("click", async () => {
+  if (busy) return;
+  busy = true;
+  $("#btnDemo").disabled = true; $("#btnReset").disabled = true;
+  reset(false);
+  for (const tpl of SCENE_FULL) { await typeAndRun(resolveCmd(tpl)); await sleep(reduced ? 0 : 650); }
+  $("#btnDemo").disabled = false; $("#btnReset").disabled = false;
+  busy = false;
+});
+
+/* ---------- repo graph ---------- */
+function drawRepo() {
+  const repo = cli.repo, hl = cli.hl;
+  const box = $("#gscroll");
+  box.innerHTML = "";
+  $("#gcap").textContent = hl ? hl.cap : "선 = 자식 → 부모 연결, 색 = 커밋을 만든 브랜치";
+  drawState();
+  const commits = [...repo.commits.values()];
+  if (!commits.length) {
+    const d = document.createElement("div");
+    d.className = "gempty";
+    d.innerHTML = repo.initialized ? '아직 커밋이 없습니다. <code>commit "Initial commit"</code> 을 입력해 보세요' : '<code>init "Alice"</code> 로 저장소를 만들면 여기에 커밋 그래프가 그려집니다';
+    box.appendChild(d);
+    return;
+  }
+  const lanes = new Map();
+  for (const c of commits) if (!lanes.has(c.branch)) lanes.set(c.branch, lanes.size);
+  const col = new Map(commits.map((c, i) => [c.hash, i]));
+  const tips = new Map();
+  for (const [name, h] of repo.branches) if (h) { if (!tips.has(h)) tips.set(h, []); tips.get(h).push(name); }
+  let maxStack = 1;
+  for (const v of tips.values()) maxStack = Math.max(maxStack, v.length);
+  const COLW = 108, LANEH = 100, LEFT = 56, TOP = 26 + maxStack * 22;
+  const pos = h => { const c = repo.commits.get(h); return [LEFT + col.get(h) * COLW, TOP + lanes.get(c.branch) * LANEH]; };
+  const W = Math.max(LEFT * 2 + (commits.length - 1) * COLW + 40, box.clientWidth || 0);
+  const H = TOP + (lanes.size - 1) * LANEH + 54;
+  const svg = S("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "커밋 그래프" }, box);
+
+  const hlNodes = hl && hl.kind !== "log" ? new Set(hl.nodes) : null;
+  const dimOthers = hl && ["path", "anc", "search"].includes(hl.kind);
+  const hlEdges = new Set();
+  if (hl && hl.kind === "path") for (const [a, b] of hl.edges) { hlEdges.add(a + ">" + b); hlEdges.add(b + ">" + a); }
+
+  const gE = S("g", {}, svg), gN = S("g", {}, svg);
+  for (const c of commits) {
+    const [x1, y1] = pos(c.hash);
+    for (const p of c.parents) {
+      const [x2, y2] = pos(p);
+      let d;
+      if (y1 === y2) d = `M${x1},${y1} L${x2},${y2}`;
+      else if (y1 > y2) { const bx = x2 + COLW; d = `M${x1},${y1} L${bx},${y1} C${bx - COLW / 2},${y1} ${x2 + COLW / 2},${y2} ${x2},${y2}`; }
+      else { const bx = x1 - COLW; d = `M${x1},${y1} C${x1 - COLW / 2},${y1} ${bx + COLW / 2},${y2} ${bx},${y2} L${x2},${y2}`; }
+      const lane = Math.max(lanes.get(c.branch), lanes.get(repo.commits.get(p).branch));
+      const e = S("path", { d, class: "g-edge", stroke: LANE_COLORS[lane % 4] }, gE);
+      if (hlEdges.has(c.hash + ">" + p)) e.classList.add("g-hl-edge");
+      else if (dimOthers) e.classList.add("dimmed");
+    }
+  }
+  const order = hl && hl.kind === "log" ? new Map(hl.order.map((h, i) => [h, i + 1])) : null;
+  for (const c of commits) {
+    const [x, y] = pos(c.hash);
+    const color = LANE_COLORS[lanes.get(c.branch) % 4];
+    const g = S("g", {}, gN);
+    T("title", {}, `${c.hash}  ${c.message}\nauthor: ${c.author}\nparents: [${c.parents.join(", ")}]`, g);
+    const isHl = hlNodes && hlNodes.has(c.hash);
+    if (dimOthers && !isHl) g.classList.add("dimmed");
+    const filled = isHl && !(hl.kind === "anc" && c.hash === hl.origin);
+    S("circle", { cx: x, cy: y, r: 10, class: "g-node", stroke: color, style: filled ? `fill:${color}` : "" }, g);
+    if (hl && hl.kind === "anc" && c.hash === hl.origin) S("circle", { cx: x, cy: y, r: 15, fill: "none", stroke: color, "stroke-width": 2, class: "g-origin" }, g);
+    if (c.parents.length > 1) S("circle", { cx: x, cy: y, r: 5, fill: color, stroke: "none" }, g);
+    if (hl && hl.kind === "new" && isHl) S("circle", { cx: x, cy: y, r: 16, fill: "none", stroke: "var(--accent)", "stroke-width": 2 }, g);
+    T("text", { x, y: y + 26, "text-anchor": "middle", class: "g-hash" }, c.hash, g);
+    const msg = c.message.length > 15 ? c.message.slice(0, 14) + "…" : c.message;
+    T("text", { x, y: y + 40, "text-anchor": "middle", class: "g-msg" }, msg, g);
+    if (order && order.has(c.hash)) {
+      const bx = x + 12, by = y - 13;
+      S("circle", { cx: bx, cy: by, r: 8, class: "g-badge" }, g);
+      T("text", { x: bx, y: by + 3.5, "text-anchor": "middle", class: "g-badge-t" }, String(order.get(c.hash)), g);
+    }
+    const names = tips.get(c.hash) || [];
+    names.forEach((name, k) => {
+      const isHead = name === repo.head;
+      const label = isHead ? `HEAD → ${name}` : name;
+      const w = label.length * 6.9 + 16;
+      const py = y - 30 - k * 22;
+      const bc = lanes.has(name) ? LANE_COLORS[lanes.get(name) % 4] : "var(--muted)";
+      S("rect", { x: x - w / 2, y: py - 9, width: w, height: 18, rx: 9, fill: isHead ? bc : "var(--surface)", stroke: bc, "stroke-width": 1.5 }, g);
+      T("text", { x, y: py + 4, "text-anchor": "middle", class: "g-pill-t", fill: isHead ? "var(--surface)" : bc }, label, g);
+    });
+  }
+  box.scrollLeft = box.scrollWidth;
+}
+function drawState() {
+  const repo = cli.repo, st = $("#state");
+  if (!repo.initialized) { st.innerHTML = `<div><div class="lbl">상태</div><div class="dim">INIT 전</div></div><div></div><div></div>`; return; }
+  const br = [...repo.branches].map(([n, h]) => `<div class="row">${n === repo.head ? "*" : "&nbsp;"} <span class="k">"${esc(n)}"</span>: ${h ? `"${h}"` : "None"}</div>`).join("");
+  const cm = [...repo.commits.values()].map(c => `<div class="row"><span class="k">"${c.hash}"</span>: ${esc(c.message)} <span class="dim">← [${c.parents.join(", ")}]</span></div>`).join("") || `<div class="dim">{}</div>`;
+  const kw = [...repo.index.keyword.postings].map(([k, v]) => `<div class="row"><span class="k">"${esc(k)}"</span>: [${v.join(", ")}]</div>`).join("") || `<div class="dim">{}</div>`;
+  st.innerHTML =
+    `<div><div class="lbl">head · user · branches</div><div class="row">head = <span class="k">"${esc(repo.head)}"</span></div><div class="row">user = <span class="k">"${esc(repo.user)}"</span></div>${br}</div>` +
+    `<div><div class="lbl">commits (dict) ← parents</div>${cm}</div>` +
+    `<div><div class="lbl">keyword_index</div>${kw}</div>`;
+}
+
+/* ---------- example graph (diamond) ---------- */
+function mk(hash, message, author, parents, seq) { return { hash, message, author, parents, branch: "", seq, timestamp: new Date(2026, 9, 11, 9, seq) }; }
+const EX = new Map([
+  ["505181a", mk("505181a", "Initial commit", "Alice", [], 1)],
+  ["15809e9", mk("15809e9", "Add login feature", "Alice", ["505181a"], 2)],
+  ["78ca51e", mk("78ca51e", "Add payment feature", "Alice", ["505181a"], 3)],
+  ["e7a1f20", mk("e7a1f20", "Merge branch 'feature'", "Alice", ["78ca51e", "15809e9"], 4)],
+]);
+const SHORT = { "505181a": "Initial", "15809e9": "login", "78ca51e": "payment", "e7a1f20": "Merge" };
+const DPOS = { "505181a": [95, 112], "15809e9": [305, 46], "78ca51e": [305, 178], "e7a1f20": [515, 112] };
+const BW = 160, BH = 46;
+const CIRC = ["①", "②", "③", "④", "⑤"];
+
+function drawDiamond(host, st = {}) {
+  host.innerHTML = "";
+  const svg = S("svg", { viewBox: "0 0 610 240", role: "img", "aria-label": "예시 커밋 그래프" }, host);
+  const defs = S("defs", {}, svg);
+  for (const [id, cls] of [["ah", "d-arrow"], ["ahh", "d-arrow-hl"], ["ahs", "d-arrow-skip"]]) {
+    const m = S("marker", { id: host.id + id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
+    S("path", { d: "M0,0 L10,5 L0,10 z", class: cls }, m);
+  }
+  for (const c of EX.values()) for (const p of c.parents) {
+    const [cx, cy] = DPOS[c.hash], [px, py] = DPOS[p];
+    const k = c.hash + ">" + p;
+    const cls = (st.edges && st.edges[k]) || "";
+    const attrs = { x1: cx - BW / 2, y1: cy, x2: px + BW / 2 + 2, y2: py, class: "d-edge " + cls };
+    if (!st.undirected) attrs["marker-end"] = `url(#${host.id}${cls === "hl" ? "ahh" : cls === "skip" ? "ahs" : "ah"})`;
+    S("line", attrs, svg);
+    if (st.edgeLabels && st.edgeLabels[k]) {
+      const mx = (cx - BW / 2 + px + BW / 2) / 2, my = (cy + py) / 2;
+      T("text", { x: mx, y: my - 6, "text-anchor": "middle", class: "d-hash", style: "fill:var(--bad)" }, st.edgeLabels[k], svg);
+    }
+  }
+  for (const c of EX.values()) {
+    const [x, y] = DPOS[c.hash];
+    const g = S("g", { class: (st.nodes && st.nodes[c.hash]) || "" }, svg);
+    S("rect", { x: x - BW / 2, y: y - BH / 2, width: BW, height: BH, rx: 7, class: "d-box" }, g);
+    T("text", { x, y: y - 3, "text-anchor": "middle", class: "d-msg" }, c.message, g);
+    T("text", { x, y: y + 14, "text-anchor": "middle", class: "d-hash" }, c.hash, g);
+    const badge = st.badges && st.badges[c.hash];
+    if (badge) {
+      const w = badge.length * 7.2 + 14;
+      const by = y + BH / 2 + 13;
+      S("rect", { x: x - w / 2, y: by - 10, width: w, height: 20, rx: 10, class: "d-badge" }, g);
+      T("text", { x, y: by + 4, "text-anchor": "middle", class: "d-badge-t" }, badge, g);
+    }
+  }
+}
+
+/* ---------- stepper ---------- */
+function makeStepper(root, steps, render) {
+  root.innerHTML = `
+    <div class="st-vis" id="${root.id}-vis"></div>
+    <div class="st-body">
+      <div class="st-cap" aria-live="polite"></div>
+      <dl class="kv"></dl>
+      <div class="st-ctl">
+        <button class="btn" type="button" data-a="first">처음</button>
+        <button class="btn" type="button" data-a="prev">◀ 이전</button>
+        <button class="btn primary" type="button" data-a="next">다음 ▶</button>
+        <div class="dots">${steps.map(() => "<i></i>").join("")}</div>
+        <span class="st-count"></span>
+      </div>
+    </div>`;
+  let i = 0;
+  const vis = root.querySelector(".st-vis"), cap = root.querySelector(".st-cap"), kv = root.querySelector(".kv");
+  const bFirst = root.querySelector('[data-a="first"]'), bPrev = root.querySelector('[data-a="prev"]'), bNext = root.querySelector('[data-a="next"]');
+  function show() {
+    const s = steps[i];
+    drawDiamond(vis, s.graph);
+    cap.innerHTML = s.cap;
+    kv.innerHTML = s.rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+    root.querySelectorAll(".dots i").forEach((d, k) => d.classList.toggle("on", k <= i));
+    root.querySelector(".st-count").textContent = `${i + 1} / ${steps.length}`;
+    bFirst.disabled = bPrev.disabled = i === 0;
+    bNext.disabled = i === steps.length - 1;
+  }
+  bFirst.onclick = () => { i = 0; show(); };
+  bPrev.onclick = () => { i = Math.max(0, i - 1); show(); };
+  bNext.onclick = () => { i = Math.min(steps.length - 1, i + 1); show(); };
+  show();
+}
+const pills = (arr, cls = "") => arr.length ? arr.map(h => `<span class="pill ${cls}">${esc(SHORT[h] || h)}</span>`).join("") : `<span class="empty">비어 있음</span>`;
+const nm = h => `<b>${esc(EX.get(h).message)}</b>`;
+
+/* topo steps */
+(function () {
+  const steps = [];
+  topologicalSort(EX, ev => {
+    const nodes = {}, badges = {}, edges = {};
+    for (const h of EX.keys()) {
+      const idx = ev.order.indexOf(h);
+      if (idx >= 0) { nodes[h] = ev.type === "pop" && h === ev.cur ? "n-current" : "n-done"; badges[h] = `${CIRC[idx]} 출력`; }
+      else { nodes[h] = ev.queue.includes(h) ? "n-queue" : ""; badges[h] = `남은 부모 ${ev.indeg.get(h)}`; }
+    }
+    for (const c of EX.values()) for (const p of c.parents) if (ev.order.includes(p)) edges[c.hash + ">" + p] = "dim";
+    let cap;
+    if (ev.type === "start") cap = "커밋마다 <b>아직 출력 안 된 부모 수</b>를 셈 → 0인 커밋을 큐에 넣음";
+    else {
+      const kids = ev.children.map(h => esc(SHORT[h])).join(", ");
+      cap = `큐에서 ${nm(ev.cur)}을(를) 꺼내 출력` + (kids ? ` → 자식(${kids})의 남은 부모 수 -1` : " → 자식 없음") +
+        (ev.pushed.length ? ` → 0이 된 ${ev.pushed.map(h => esc(SHORT[h])).join(", ")}을(를) 큐에 넣음` : (ev.children.length ? " → 아직 0이 아니라 큐에 못 들어감" : ""));
+      if (!ev.queue.length) cap += ". 큐가 비어 종료, 4개 모두 출력했으니 순환 없음";
+    }
+    steps.push({ graph: { nodes, badges, edges }, cap, rows: [["큐", pills(ev.queue, "q")], ["LOG 출력", pills(ev.order, "done")]] });
+  });
+  makeStepper($("#topoStepper"), steps);
+})();
+
+/* path steps */
+(function () {
+  const START = "15809e9", END = "78ca51e";
+  const steps = [];
+  let walkDist = null;
+  shortestPath(EX, START, END, ev => {
+    const nodes = {}, badges = {}, edges = {};
+    if (ev.type.startsWith("bfs")) {
+      for (const h of EX.keys()) {
+        if (ev.dist.has(h)) { badges[h] = `남은 ${ev.dist.get(h)}칸`; nodes[h] = ev.type === "bfs-pop" && h === ev.cur ? "n-current" : ev.queue.includes(h) ? "n-queue" : "n-done"; }
+        else nodes[h] = "";
+      }
+      const cap = ev.type === "bfs-start"
+        ? `1단계 : 도착점 ${nm(END)}에서 BFS 시작 (남은 0칸)`
+        : `1단계 : ${nm(ev.cur)}의 이웃 중 처음 보는 커밋` + (ev.found.length ? ` ${ev.found.map(h => esc(SHORT[h])).join(", ")}에 "남은 ${ev.dist.get(ev.cur) + 1}칸" 기록` : "은 없음") + (ev.queue.length ? "" : ". 거리 계산 끝");
+      steps.push({ graph: { nodes, badges, edges, undirected: true }, cap, rows: [["큐", pills(ev.queue, "q")], ["경로", `<span class="empty">아직</span>`]] });
+    } else {
+      walkDist = ev.dist;
+      for (const h of EX.keys()) { badges[h] = `남은 ${walkDist.get(h)}칸`; nodes[h] = ev.path.includes(h) ? "n-done" : "n-dim"; }
+      for (let k = 1; k < ev.path.length; k++) { const a = ev.path[k - 1], b = ev.path[k]; edges[a + ">" + b] = "hl"; edges[b + ">" + a] = "hl"; }
+      let cap, cand = "";
+      if (ev.type === "walk-start") { nodes[START] = "n-current"; cap = `2단계 : 출발점 ${nm(START)}에서 남은 칸이 1씩 줄어드는 이웃으로 이동`; }
+      else {
+        for (const h of ev.cands) if (h !== ev.best) nodes[h] = "n-queue";
+        nodes[ev.best] = "n-current";
+        cand = ev.cands.map(h => `<span class="pill ${h === ev.best ? "done" : ""}">${h}</span>`).join("");
+        cap = ev.cands.length > 1
+          ? `후보 ${ev.cands.length}개 모두 남은 ${walkDist.get(ev.best)}칸 → hash가 더 작은 <b>${ev.best}</b> 선택`
+          : `남은 칸이 줄어드는 이웃은 ${nm(ev.best)} 하나 → 이동. 도착`;
+        if (ev.best === END) cap += `. 결과 <code>Path: ${ev.path.join(" -> ")}</code>`;
+      }
+      steps.push({ graph: { nodes, badges, edges, undirected: true }, cap, rows: [["후보", cand || `<span class="empty">-</span>`], ["경로", ev.path.map(h => `<span class="pill done">${h}</span>`).join(" → ")]] });
+    }
+  });
+  makeStepper($("#pathStepper"), steps);
+})();
+
+/* ancestors steps */
+(function () {
+  const ROOT = "e7a1f20";
+  const steps = [];
+  findAncestors(EX, ROOT, ev => {
+    const nodes = {}, badges = {}, edges = {}, edgeLabels = {};
+    for (const h of EX.keys()) {
+      if (h === ROOT) { nodes[h] = "n-start"; badges[h] = "시작"; continue; }
+      const idx = ev.anc.indexOf(h);
+      if (idx >= 0) { nodes[h] = ev.type === "check" && h === ev.parent && ev.added ? "n-current" : "n-done"; badges[h] = `${CIRC[idx]} 찾음`; }
+    }
+    let cap;
+    if (ev.type === "start") cap = `${nm(ROOT)}을(를) visited에 넣고 큐에서 시작 (자기 자신은 결과에서 제외)`;
+    else {
+      const k = ev.cur + ">" + ev.parent;
+      edges[k] = ev.added ? "hl" : "skip";
+      if (!ev.added) edgeLabels[k] = "이미 방문 → 건너뜀";
+      cap = ev.added
+        ? `${nm(ev.cur)}의 부모 ${nm(ev.parent)} → visited에 없음 → 추가하고 큐에 넣음`
+        : `${nm(ev.cur)}의 부모 ${nm(ev.parent)} → <b>visited에 이미 있음</b> → 건너뜀 (중복 출력 방지)`;
+    }
+    steps.push({ graph: { nodes, badges, edges, edgeLabels }, cap, rows: [["큐", pills(ev.queue, "q")], ["visited", pills([...ev.visited])], ["결과", pills(ev.anc, "done")]] });
+  });
+  steps[steps.length - 1].cap += ". 큐가 비어 종료 → 조상 3개, 중복 없음";
+  makeStepper($("#ancStepper"), steps);
+})();
+
+/* dag static */
+drawDiamond($("#dagVis"), { badges: { "505181a": "부모 0", "15809e9": "부모 1", "78ca51e": "부모 1", "e7a1f20": "부모 2" } });
+
+/* ---------- inverted index demo ---------- */
+(function () {
+  const commits = [
+    ["505181a", "Initial commit", "Alice"],
+    ["15809e9", "Add login feature", "Alice"],
+    ["78ca51e", "Add payment feature", "Alice"],
+    ["043dbc1", "Fix login bug", "Bob"],
+    ["e7a1f20", "Merge branch 'feature'", "Bob"],
+  ];
+  const idx = new SearchIndex();
+  for (const [h, m, a] of commits) idx.addCommit(h, m, a);
+  const inp = $("#idxInput");
+  function render() {
+    const q = inp.value;
+    const isAuthor = q.toLowerCase().startsWith("--author=");
+    const table = isAuthor ? idx.author : idx.keyword;
+    const terms = isAuthor ? [q.slice(q.indexOf("=") + 1).toLowerCase()].filter(Boolean) : tokenize(q);
+    const res = isAuthor ? (terms.length ? idx.searchAuthor(terms[0]) : []) : idx.searchKeyword(q);
+    $("#idxHead").textContent = isAuthor ? "author_index 키" : "keyword_index 키";
+    $("#idxTable").innerHTML = [...table.postings].map(([k, v]) =>
+      `<tr class="${terms.includes(k) ? "hit" : ""}"><td>"${esc(k)}"</td><td class="mono">${v.join(", ")}</td></tr>`).join("");
+    $("#idxLookups").textContent = terms.length;
+    $("#idxScan").textContent = commits.length;
+    const rs = new Set(res);
+    $("#idxCommits").innerHTML = commits.map(([h, m, a]) => `<div class="cm ${rs.has(h) ? "hit" : ""}"><span class="mono">${h}</span><span>${esc(m)}</span><span class="note">${a}</span></div>`).join("")
+      + `<div class="note" style="margin-top:4px">${res.length ? `Found ${res.length} ${res.length === 1 ? "commit" : "commits"}` : "No commits found"}</div>`;
+  }
+  inp.addEventListener("input", render);
+  $("#idxForm").addEventListener("submit", e => e.preventDefault());
+  render();
+})();
+
+/* ---------- sort demo ---------- */
+(function () {
+  const rows = [["Alice", "Initial commit"], ["Bob", "Add login feature"], ["Alice", "Add payment feature"], ["Bob", "Fix login bug"]]
+    .map(([au, msg], i) => ({ au, msg, i }));
+  const stage = $("#sortStage");
+  const els = rows.map(r => {
+    const d = document.createElement("div");
+    d.className = "srow " + r.au.toLowerCase();
+    d.innerHTML = `<span class="ord">${CIRC[r.i]}</span><span class="au">${r.au}</span><span class="msg">${esc(r.msg)}</span>`;
+    stage.appendChild(d);
+    return d;
+  });
+  let sorted = false;
+  function place(list) { list.forEach((r, k) => { els[r.i].style.top = `${k * 50}px`; }); }
+  place(rows);
+  $("#sortBtn").addEventListener("click", () => {
+    sorted = !sorted;
+    place(sorted ? mergeSort(rows, r => r.au.toLowerCase()) : rows);
+    $("#sortBtn").textContent = sorted ? "원래 순서로" : "작성자 기준으로 정렬";
+    $("#sortCap").textContent = sorted ? "지금 : merge_sort(key=작성자) 결과" : "지금 : LOG 기본 순서 (위상 정렬)";
+  });
+})();
+
+/* ---------- bench chart ---------- */
+(function () {
+  const sizes = [100, 500, 1000, 2000];
+  const series = [
+    { name: "삽입", color: "var(--s-ins)", v: [0.11, 2.92, 12.74, 50.10], dy: -10 },
+    { name: "병합", color: "var(--s-merge)", v: [0.10, 0.51, 1.07, 2.33], dy: -8 },
+    { name: "퀵", color: "var(--s-quick)", v: [0.05, 0.30, 0.67, 1.34], dy: 16 },
+  ];
+  const W = 460, H = 240, L = 44, R = 64, Tp = 14, B = 34, YMAX = 55;
+  const host = $("#benchChart");
+  const svg = S("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart", role: "img", "aria-label": "정렬 알고리즘 입력 크기별 실행 시간", style: "width:100%;min-width:360px;height:auto;display:block" }, host);
+  const x = i => L + (i * (W - L - R)) / (sizes.length - 1);
+  const y = v => Tp + (H - Tp - B) * (1 - v / YMAX);
+  for (const t of [0, 10, 20, 30, 40, 50]) {
+    S("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: "grid" }, svg);
+    T("text", { x: L - 8, y: y(t) + 4, "text-anchor": "end" }, String(t), svg);
+  }
+  S("line", { x1: L, x2: W - R, y1: y(0), y2: y(0), class: "axis" }, svg);
+  sizes.forEach((s, i) => T("text", { x: x(i), y: H - B + 18, "text-anchor": "middle" }, String(s), svg));
+  T("text", { x: L - 8, y: Tp - 2, "text-anchor": "end" }, "ms", svg);
+  T("text", { x: W - R, y: H - 4, "text-anchor": "end" }, "입력 크기 N", svg);
+  for (const s of series) {
+    S("polyline", { points: s.v.map((v, i) => `${x(i)},${y(v)}`).join(" "), class: "ln", stroke: s.color }, svg);
+    s.v.forEach((v, i) => S("circle", { cx: x(i), cy: y(v), r: i === s.v.length - 1 ? 4 : 2.5, fill: s.color }, svg));
+    const last = s.v.length - 1;
+    T("text", { x: x(last) + 8, y: y(s.v[last]) + 4 + (s.name === "삽입" ? 0 : s.dy / 2), class: "lbl-end", style: `fill:${s.color}` }, `${s.v[last].toFixed(2)}`, svg);
+  }
+})();
+
+/* ---------- LCS ---------- */
+(function () {
+  const a = VFILES["a.txt"].split("\n"), b = VFILES["b.txt"].split("\n");
+  const t = lcsTable(a, b), trace = [];
+  const lines = diffLines(a, b, trace);
+  const onTrace = new Set(trace.map(([i, j]) => i + "," + j));
+  let html = `<table class="lcs"><thead><tr><th>a.txt \\ b.txt</th>${b.map(s => `<th>${esc(s)}</th>`).join("")}<th>(끝)</th></tr></thead><tbody>`;
+  for (let i = 0; i <= a.length; i++) {
+    html += `<tr><th>${i < a.length ? esc(a[i]) : "(끝)"}</th>`;
+    for (let j = 0; j <= b.length; j++) html += `<td class="${onTrace.has(i + "," + j) ? "trace" : ""}">${t[i][j]}</td>`;
+    html += "</tr>";
+  }
+  $("#lcsTable").innerHTML = html + "</tbody></table>";
+  $("#diffOut").innerHTML = lines.map(l => `<div class="${l[0] === "+" ? "add" : l[0] === "-" ? "del" : ""}">${esc(l)}${l[0] === "+" ? "   (추가)" : l[0] === "-" ? "   (삭제)" : "   (공통)"}</div>`).join("");
+})();
+
+/* ---------- boot ---------- */
+reset(true);
+window.addEventListener("resize", () => drawRepo());
+</script>
+</body>
+</html>

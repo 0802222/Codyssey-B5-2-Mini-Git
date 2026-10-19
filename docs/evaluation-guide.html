@@ -1,0 +1,1075 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini Git 예상 질문</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* 색상 변수 (밝은 화면) */
+:root {
+  --bg: #f2f4f3;            /* 페이지 배경 */
+  --surface: #ffffff;       /* 카드 배경 */
+  --sunk: #e8ecea;          /* 살짝 들어간 배경 (코드, 표 머리) */
+  --ink: #17201c;           /* 기본 글자색 */
+  --muted: #56655e;         /* 흐린 글자색 */
+  --line: #d3dbd7;          /* 테두리 */
+  --line-strong: #9aaaa2;   /* 진한 테두리, 그래프 선 */
+  --accent: #0a6a84;        /* 강조색 */
+  --accent-soft: #dcecf0;   /* 강조색 배경 */
+  --ok: #2f7d32;            /* 맞음 */
+  --ok-soft: #e1f1e2;       /* 맞음 배경 */
+  --bad: #b42318;           /* 틀림 */
+  --bad-soft: #fbe5e2;      /* 틀림 배경 */
+  --term-bg: #121b18;       /* 터미널 배경 */
+  --term-fg: #d5e2dc;       /* 터미널 글자 */
+  --term-dim: #7c9188;      /* 터미널 흐린 글자 */
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;  /* 본문 글꼴 */
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;                         /* 코드 글꼴 */
+}
+/* 색상 변수 (어두운 화면, 시스템 설정을 따를 때) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1412; --surface: #161f1c; --sunk: #1c2723; --ink: #e2ebe6; --muted: #93a49c;   /* 기본 색 */
+    --line: #2a3632; --line-strong: #4d5f58; --accent: #5cb7cf; --accent-soft: #17323a;     /* 선, 강조 */
+    --ok: #6fcf75; --ok-soft: #173020; --bad: #f2877a; --bad-soft: #3a1c19;                 /* 맞음, 틀림 */
+    --term-bg: #080c0b;                                                                       /* 터미널 */
+    color-scheme: dark;                                                                       /* 스크롤바 등도 어둡게 */
+  }
+}
+/* 색상 변수 (어두운 화면을 직접 고른 경우) */
+:root[data-theme="dark"] {
+  --bg: #0e1412; --surface: #161f1c; --sunk: #1c2723; --ink: #e2ebe6; --muted: #93a49c;     /* 기본 색 */
+  --line: #2a3632; --line-strong: #4d5f58; --accent: #5cb7cf; --accent-soft: #17323a;       /* 선, 강조 */
+  --ok: #6fcf75; --ok-soft: #173020; --bad: #f2877a; --bad-soft: #3a1c19;                   /* 맞음, 틀림 */
+  --term-bg: #080c0b;                                                                         /* 터미널 */
+  color-scheme: dark;                                                                         /* 스크롤바 등도 어둡게 */
+}
+
+/* 기본 */
+* { box-sizing: border-box; }                                                           /* 테두리를 크기 안에 포함 */
+html { scroll-behavior: smooth; }                                                       /* 목차 클릭 시 부드럽게 이동 */
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.7; }  /* 페이지 전체 글자, 배경 */
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 16px; }                            /* 가운데 정렬 + 양옆 여백 16px */
+h1, h2, h3, p { margin: 0; }                                                            /* 제목, 문단 기본 여백 제거 */
+h2 { font-size: 1.5rem; line-height: 1.35; }                                            /* 항목 제목 크기 */
+h3 { font-size: 1.02rem; line-height: 1.5; font-weight: 600; }                          /* 질문 제목 크기 */
+ul, ol { margin: 0; padding-left: 1.3em; }                                              /* 목록 들여쓰기 */
+li + li { margin-top: 3px; }                                                            /* 목록 줄 간격 */
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--sunk); padding: 1px 5px; border-radius: 4px; }  /* 코드 조각 */
+a { color: var(--accent); }                                                             /* 링크 색 */
+button { font: inherit; color: inherit; cursor: pointer; }                              /* 버튼 글꼴 상속 */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }               /* 키보드 이동 시 테두리 */
+
+/* 머리말 */
+header.top { background: var(--surface); border-bottom: 1px solid var(--line); }        /* 맨 위 영역 */
+header.top .wrap { padding-top: 32px; padding-bottom: 24px; display: grid; gap: 14px; } /* 머리말 안쪽 간격 */
+.eyebrow { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }  /* 작은 윗글 */
+h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.25; }                        /* 페이지 제목 */
+.lede { color: var(--muted); max-width: 70ch; }                                         /* 소개 문장 */
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }              /* 연습 모드, 진행률 줄 */
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 5px 12px; font-size: 13px; }  /* 일반 버튼 */
+.btn:hover { border-color: var(--accent); }                                             /* 버튼에 마우스 올림 */
+.btn.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }  /* 켜진 버튼 */
+.progress { font-size: 13px; color: var(--muted); }                                     /* 진행률 글자 */
+.bar { width: 140px; height: 6px; border-radius: 3px; background: var(--sunk); overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 6px; }  /* 진행률 막대 틀 */
+.bar i { display: block; height: 100%; background: var(--ok); width: 0; transition: width 0.3s; }  /* 진행률 막대 채움 */
+
+/* 목차 */
+nav.toc { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }  /* 스크롤해도 위에 붙음 */
+nav.toc .wrap { display: flex; gap: 4px; overflow-x: auto; padding-top: 8px; padding-bottom: 8px; }  /* 가로로 나열 */
+nav.toc a { flex: none; font-size: 13px; text-decoration: none; color: var(--muted); padding: 4px 10px; border-radius: 999px; }  /* 목차 버튼 */
+nav.toc a:hover { color: var(--ink); background: var(--sunk); }                         /* 목차에 마우스 올림 */
+
+/* 항목 */
+section { padding: 40px 0; border-bottom: 1px solid var(--line); scroll-margin-top: 44px; }  /* 항목 하나 */
+.sec-head { display: grid; gap: 8px; margin-bottom: 20px; }                             /* 항목 제목 묶음 */
+.sec-tag { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }      /* 항목 번호 */
+.sec-head p { color: var(--muted); max-width: 72ch; }                                   /* 항목 설명 */
+.easy { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 14px; max-width: 76ch; }  /* 쉽게 말하면 상자 */
+.easy b { color: var(--accent); }                                                       /* 쉽게 말하면 강조 */
+
+/* 용어 표 */
+.tbl { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }  /* 표 틀 (좁으면 가로 스크롤) */
+table { border-collapse: collapse; width: 100%; font-size: 14px; }                       /* 표 */
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }  /* 표 칸 */
+th { font-size: 12px; color: var(--muted); background: var(--sunk); font-weight: 600; } /* 표 머리 */
+tr:last-child td { border-bottom: 0; }                                                  /* 마지막 줄 밑줄 없음 */
+td.m { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }           /* 코드 글꼴 칸 */
+
+/* 질문 카드 */
+.qs { display: grid; gap: 14px; }                                                       /* 카드 목록 */
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; display: grid; gap: 12px; min-width: 0; }  /* 카드 하나 */
+.q.done { border-color: var(--ok); }                                                    /* 설명 가능 체크한 카드 */
+.q-head { display: flex; gap: 10px; align-items: flex-start; }                          /* 카드 제목 줄 */
+.q-no { font-family: var(--font-mono); font-size: 12px; color: var(--accent); background: var(--accent-soft); border-radius: 4px; padding: 1px 7px; flex: none; margin-top: 2px; }  /* 질문 번호 */
+.q-head h3 { flex: 1; min-width: 0; }                                                   /* 질문 글 */
+.can { flex: none; font-size: 12px; color: var(--muted); display: flex; gap: 5px; align-items: center; white-space: nowrap; margin-top: 2px; }  /* 설명 가능 체크 */
+.ans { display: grid; gap: 10px; min-width: 0; }                                        /* 답 영역 */
+.one { font-weight: 600; }                                                              /* 한 줄 답 */
+.one::before { content: "한 줄 답 "; font-size: 11px; font-weight: 600; color: var(--surface); background: var(--ok); border-radius: 4px; padding: 1px 6px; margin-right: 6px; vertical-align: 2px; }  /* 한 줄 답 표시 */
+.ans ul, .ans ol { font-size: 14px; }                                                   /* 답 목록 글자 */
+.where { font-size: 13px; color: var(--muted); }                                        /* 볼 코드 위치 */
+.where::before { content: "볼 코드 → "; color: var(--accent); font-weight: 600; }       /* 볼 코드 표시 */
+.reveal { display: none; justify-self: start; }                                         /* 답 보기 버튼 (평소엔 숨김) */
+body.quiz .reveal { display: inline-block; }                                            /* 연습 모드에선 버튼 보임 */
+body.quiz .q:not(.open) .ans { display: none; }                                         /* 연습 모드에선 답 숨김 */
+
+/* 터미널 블록 */
+pre.term { margin: 0; background: var(--term-bg); color: var(--term-fg); border-radius: 6px; padding: 10px 14px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.55; overflow-x: auto; white-space: pre; }  /* 실행 결과 */
+pre.term .p { color: #78c4d8; }                                                         /* 프롬프트 */
+pre.term .c { color: var(--term-dim); }                                                 /* 설명 줄 */
+
+/* 데모 */
+.demo { border: 1px dashed var(--line-strong); border-radius: 8px; padding: 14px; display: grid; gap: 10px; background: var(--bg); min-width: 0; }  /* 직접 해 보기 상자 */
+.demo-t { font-size: 12px; font-weight: 600; color: var(--accent); }                    /* 직접 해 보기 제목 */
+.ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; } /* 데모 조작 줄 */
+.ctl select { font: inherit; font-family: var(--font-mono); font-size: 12px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }  /* 선택 상자 */
+.out { font-family: var(--font-mono); font-size: 13px; padding: 6px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); overflow-x: auto; white-space: pre; }  /* 데모 결과 */
+.out.bad { color: var(--bad); border-color: var(--bad); background: var(--bad-soft); }  /* 데모 결과 (실패) */
+.out.ok { color: var(--ok); border-color: var(--ok); background: var(--ok-soft); }      /* 데모 결과 (성공) */
+.gbox { overflow-x: auto; }                                                             /* 그래프 틀 (좁으면 가로 스크롤) */
+.gbox svg { display: block; width: 100%; min-width: 440px; height: auto; }              /* 그래프 크기 */
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; } /* 두 칸 나란히 */
+@media (max-width: 700px) { .two { grid-template-columns: minmax(0, 1fr); } }           /* 좁은 화면은 한 칸 */
+td.x { color: var(--bad); font-weight: 600; }                                           /* 순서 위반 칸 */
+td.v { color: var(--ok); font-weight: 600; }                                            /* 순서 지킴 칸 */
+td.chg { background: var(--bad-soft); }                                                 /* 바뀐 hash 칸 */
+
+/* 그래프 그림 */
+.n-box { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.5; }         /* 커밋 상자 */
+.n-msg { font-family: var(--font-body); font-size: 13px; font-weight: 500; fill: var(--ink); }  /* 커밋 메시지 */
+.n-hash { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }         /* 커밋 hash */
+.n-badge { font-family: var(--font-mono); font-size: 11px; font-weight: 600; fill: var(--accent); }  /* 상자 위 작은 글 */
+g.hl .n-box { stroke: var(--accent); stroke-width: 3; fill: var(--accent-soft); }       /* 강조된 커밋 */
+g.dim { opacity: 0.35; }                                                                /* 흐린 커밋 */
+.e { stroke: var(--line-strong); stroke-width: 2; fill: none; }                         /* 부모 연결선 */
+.e.hl { stroke: var(--accent); stroke-width: 4; }                                       /* 강조된 연결선 */
+.e.bad { stroke: var(--bad); stroke-width: 3; stroke-dasharray: 6 4; }                  /* 순환을 만드는 선 */
+.ah { fill: var(--line-strong); }                                                       /* 화살촉 */
+.ah-hl { fill: var(--accent); }                                                         /* 강조 화살촉 */
+.ah-bad { fill: var(--bad); }                                                           /* 순환 화살촉 */
+
+footer { padding: 28px 0 44px; font-size: 13px; color: var(--muted); }                  /* 꼬리말 */
+</style>
+</head>
+<body>
+
+<!-- 머리말 -->
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">Codyssey · B5-2 · Mini Git</div>
+    <h1>예상 질문 가이드</h1>
+    <p class="lede">동료평가 때 나올 만한 질문 20개를 기능, 설계, 개념, 응용 순서로 정리한 페이지입니다. Git을 처음 보는 사람도 따라올 수 있게 질문마다 "한 줄 답 → 자세한 설명 → 직접 확인하는 방법 → 볼 코드" 순서로 적었습니다. 실행 결과는 모두 <code>python main.py</code>로 실제로 돌린 결과입니다. hash는 실행할 때마다 달라집니다.</p>
+    <div class="tools">
+      <button class="btn" id="quizBtn" type="button">연습 모드 (답 가리기)</button>
+      <span class="progress">설명할 수 있는 질문 <b id="doneCount">0</b> / 20<span class="bar"><i id="doneBar"></i></span></span>
+      <button class="btn" id="clearBtn" type="button">체크 초기화</button>
+    </div>
+  </div>
+</header>
+
+<!-- 목차 -->
+<nav class="toc" aria-label="목차">
+  <div class="wrap">
+    <a href="#words">먼저 알아둘 단어</a>
+    <a href="#s1">1 · 기능 확인</a>
+    <a href="#s2">2 · 설계</a>
+    <a href="#s3">3 · 개념</a>
+    <a href="#s4">4 · 응용</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- 용어 -->
+<section id="words">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag">준비</span>
+      <h2>먼저 알아둘 단어</h2>
+      <p>질문에 계속 나오는 단어입니다. 영어 약자는 원래 이름도 같이 적었습니다.</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>단어</th><th>원래 이름</th><th>쉬운 뜻</th></tr></thead>
+        <tbody>
+          <tr><td>커밋 (commit)</td><td>commit = 확정하다</td><td>"이 순간을 기록해 둔다"는 저장 한 번. 이 과제에서는 hash, 메시지, 작성자, 시각, 부모만 저장</td></tr>
+          <tr><td>부모 커밋</td><td>parent</td><td>바로 앞 커밋. 첫 커밋은 0개, 보통 1개, 합친(merge) 커밋은 2개</td></tr>
+          <tr><td>브랜치 (branch)</td><td>branch = 나뭇가지</td><td>"이 줄의 마지막 커밋은 이것"이라고 붙여 둔 이름표</td></tr>
+          <tr><td>HEAD</td><td>head = 머리</td><td>"지금 내가 있는 브랜치"를 가리키는 표시. 새 커밋은 여기에 붙음</td></tr>
+          <tr><td>hash</td><td>hash = 잘게 다지다</td><td>긴 글자를 짧은 고정 길이 글자로 바꾼 값. 여기서는 커밋 번호표(7자리)</td></tr>
+          <tr><td>SHA-1</td><td>Secure Hash Algorithm 1</td><td>hash를 만드는 계산 방법 중 하나. 40자리를 만들고 앞 7자리만 씀</td></tr>
+          <tr><td>그래프</td><td>graph</td><td>점(노드)과 선(간선)으로 이은 그림. 커밋 = 점, 부모 연결 = 선</td></tr>
+          <tr><td>DAG</td><td>Directed Acyclic Graph</td><td>선에 방향이 있고, 따라가도 제자리로 돌아오는 고리가 없는 그래프</td></tr>
+          <tr><td>BFS</td><td>Breadth-First Search (너비 우선 탐색)</td><td>가까운 점부터 한 겹씩 넓혀 가며 찾는 방법</td></tr>
+          <tr><td>큐 (deque)</td><td>double-ended queue</td><td>줄 서기. 먼저 들어온 것이 먼저 나감 (FIFO = First In First Out)</td></tr>
+          <tr><td>dict</td><td>dictionary (해시맵)</td><td>"이름표 → 값" 사물함. 이름표만 알면 바로 꺼냄</td></tr>
+          <tr><td>set</td><td>집합</td><td>중복 없는 주머니. "이미 넣었나?"를 바로 확인</td></tr>
+          <tr><td>역색인</td><td>Inverted Index</td><td>책 뒤의 찾아보기. "단어 → 그 단어가 나온 커밋 목록"</td></tr>
+          <tr><td>O( )</td><td>Big-O 표기법</td><td>데이터가 N개로 늘 때 일이 얼마나 늘어나는지. O(1) = 그대로, O(N) = N배</td></tr>
+          <tr><td>V, E</td><td>Vertex, Edge</td><td>V = 커밋 수, E = 부모 연결 수</td></tr>
+          <tr><td>REPL</td><td>Read-Eval-Print Loop</td><td>입력 읽기 → 실행 → 출력을 반복하는 프로그램 형태 (<code>mini-git&gt;</code>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 항목 1 -->
+<section id="s1">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag">PART 1</span>
+      <h2>기능이 요구사항대로 동작하는가</h2>
+      <p>직접 명령을 입력해서 확인하는 부분입니다. 아래 명령을 순서대로 입력하면 같은 결과를 볼 수 있습니다.</p>
+    </div>
+    <p class="easy"><b>쉽게 말하면</b> : 커밋은 "사진 찍기", 브랜치는 "사진첩 이름표", HEAD는 "지금 펼쳐 둔 사진첩"입니다. 새 사진(커밋)은 펼쳐 둔 사진첩에만 붙습니다.</p>
+    <div class="qs" style="margin-top:16px">
+
+      <article class="q" data-q="1-1">
+        <div class="q-head"><span class="q-no">1-1</span><h3>INIT을 하면 무엇이 만들어지나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">main 브랜치를 만들고, HEAD를 main에 두고, 사용자 이름을 저장합니다.</p>
+          <ul>
+            <li>처음 만든 main은 아직 커밋이 없어서 <code>None</code>을 가리킵니다 (<code>branches = {"main": None}</code>)</li>
+            <li>INIT을 다시 하면 기록은 그대로 두고 사용자만 바꿉니다. 여러 작성자 커밋을 만들어 SEARCH --author, LOG --sort-by=author를 확인하려고 이렇게 했습니다</li>
+            <li>INIT 전에 다른 명령을 하면 <code>Not initialized. Use INIT &lt;user_name&gt; first</code></li>
+          </ul>
+<pre class="term"><span class="p">mini-git&gt;</span> init "Alice"
+Initialized repository.
+Current branch: main
+Current user: Alice
+<span class="p">mini-git&gt;</span> branch
+* main -&gt; (no commits)</pre>
+          <p class="where"><code>repository.py</code> · <code>Repository.init()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="1-2">
+        <div class="q-head"><span class="q-no">1-2</span><h3>브랜치를 바꾼 뒤 커밋하면 어느 브랜치에 붙나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">COMMIT은 HEAD가 가리키는 브랜치의 이름표만 새 커밋으로 옮깁니다. 다른 브랜치는 그대로입니다.</p>
+          <ul>
+            <li><code>branch feature</code> : 지금 커밋을 가리키는 이름표를 하나 더 붙임 (커밋을 복사하지 않음)</li>
+            <li><code>switch feature</code> : HEAD를 feature로 옮김</li>
+            <li><code>commit</code> : 새 커밋의 부모 = 지금 커밋, 그다음 <code>branches["feature"]</code>만 새 hash로 바꿈</li>
+            <li>출력의 <code>[feature b348f02]</code>와 <code>branch</code> 목록에서 main, feature가 다른 커밋을 가리키는 것으로 확인</li>
+          </ul>
+<pre class="term"><span class="p">mini-git&gt;</span> commit "Initial commit"
+[main bda937b] Initial commit
+<span class="p">mini-git&gt;</span> branch feature
+Created branch: feature
+<span class="p">mini-git&gt;</span> switch feature
+Switched to branch: feature
+<span class="p">mini-git&gt;</span> commit "Add login feature"
+[feature b348f02] Add login feature
+<span class="p">mini-git&gt;</span> branch
+  main -&gt; bda937b
+* feature -&gt; b348f02</pre>
+          <p class="where"><code>repository.py</code> · <code>create_branch()</code>, <code>switch()</code>, <code>commit()</code>, <code>_create_commit()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="1-3">
+        <div class="q-head"><span class="q-no">1-3</span><h3>LOG는 어떤 순서로 커밋을 보여 주나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">시각이 아니라 부모 관계를 보고 순서를 정하는 위상 정렬로 출력합니다.</p>
+          <ul>
+            <li>아래 출력을 보면 세 커밋의 시각이 모두 <code>02:27:06</code>으로 같습니다. 시각만으로는 순서를 정할 수 없습니다</li>
+            <li>Initial commit(부모)이 login, payment(자식)보다 항상 먼저 나옵니다</li>
+            <li>자세한 원리는 <a href="#q3-2">3-2</a></li>
+          </ul>
+<pre class="term"><span class="p">mini-git&gt;</span> switch main
+<span class="p">mini-git&gt;</span> commit "Add payment feature"
+[main 27dd8e1] Add payment feature
+<span class="p">mini-git&gt;</span> log
+commit bda937b (Alice, 2026-10-20 02:27:06) [main]
+Initial commit
+commit b348f02 (Alice, 2026-10-20 02:27:06) [feature]
+Add login feature
+commit 27dd8e1 (Alice, 2026-10-20 02:27:06) [main]
+Add payment feature</pre>
+          <p class="where"><code>graph.py</code> · <code>topological_sort()</code> / <code>repository.py</code> · <code>log()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="1-4">
+        <div class="q-head"><span class="q-no">1-4</span><h3>PATH는 경로를 어떻게 찾고, 길이 없으면 어떻게 되나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">연결을 방향 없는 선으로 보고 BFS로 선이 가장 적은 길을 찾습니다. 길이 없으면 <code>None</code>을 돌려주고 <code>No path</code>를 출력합니다.</p>
+          <ul>
+            <li>login과 payment는 형제라서 부모(Initial commit)를 거쳐 갑니다</li>
+            <li>merge 뒤에는 merge 커밋을 거치는 길도 2칸이 됩니다. 길이가 같으면 <code>hash1-&gt;hash2</code> 글자가 사전순으로 더 작은 길을 고릅니다 (<code>52b9683</code> &lt; <code>bda937b</code>)</li>
+            <li><b>No path는 CLI에서 나오지 않습니다.</b> 첫 커밋 말고는 모든 커밋에 부모가 있어서, 모든 커밋이 결국 첫 커밋과 이어지기 때문입니다. 그래서 연결이 끊긴 가짜 그래프로 테스트에서 확인합니다 (<code>test_shortest_path_same_and_none</code>)</li>
+            <li>없는 hash를 넣으면 No path가 아니라 <code>Unknown commit: ...</code></li>
+          </ul>
+<pre class="term"><span class="p">mini-git&gt;</span> path b348f02 27dd8e1
+Path: b348f02 -&gt; bda937b -&gt; 27dd8e1
+<span class="p">mini-git&gt;</span> merge feature
+[main 52b9683] Merge branch 'feature' into main
+<span class="p">mini-git&gt;</span> path b348f02 27dd8e1
+Path: b348f02 -&gt; 52b9683 -&gt; 27dd8e1</pre>
+          <p class="where"><code>graph.py</code> · <code>shortest_path()</code> / <code>tests/test_minigit.py</code> · <code>TestGraph</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="1-5">
+        <div class="q-head"><span class="q-no">1-5</span><h3>ANCESTORS는 조상을 빠짐없이, 중복 없이 보여 주나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">부모 방향으로만 BFS를 하고, 이미 본 커밋은 <code>visited</code> 집합으로 걸러서 빠짐없이, 한 번씩만 출력합니다.</p>
+          <ul>
+            <li>merge 커밋에서 Initial commit까지 가는 길은 2개(login 경유, payment 경유)지만 결과에는 한 번만 나옵니다</li>
+            <li>가까운 조상부터 나오고, 자기 자신은 빠집니다</li>
+          </ul>
+<pre class="term"><span class="p">mini-git&gt;</span> ancestors 52b9683
+Ancestors of 52b9683 (3):
+- 27dd8e1: Add payment feature
+- b348f02: Add login feature
+- bda937b: Initial commit</pre>
+          <p class="where"><code>graph.py</code> · <code>find_ancestors()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="1-6">
+        <div class="q-head"><span class="q-no">1-6</span><h3>검색과 정렬 옵션은 어떻게 동작하나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">검색은 역색인에서 바로 꺼내고, 정렬은 직접 만든 병합 정렬(merge_sort)로 합니다.</p>
+          <ul>
+            <li>대소문자를 가리지 않음 (<code>--author=BOB</code>도 Bob을 찾음)</li>
+            <li>여러 단어(<code>"add login"</code>)는 모든 단어가 들어간 커밋만</li>
+            <li>단어 단위라서 <code>log</code>로는 <code>login</code>을 못 찾음</li>
+            <li>정렬 결과에서는 브랜치 표시 <code>[main]</code>을 빼고 출력, merge 커밋은 <code>Merge: 부모1 부모2</code> 표시</li>
+          </ul>
+<pre class="term"><span class="p">mini-git&gt;</span> init "Bob"
+Reinitialized repository (history kept).
+Current branch: main
+Current user: Bob
+<span class="p">mini-git&gt;</span> commit "Fix login bug"
+[main c2626a6] Fix login bug
+<span class="p">mini-git&gt;</span> search "login"
+Found 2 commits:
+- b348f02: Add login feature
+- c2626a6: Fix login bug
+<span class="p">mini-git&gt;</span> search "add login"
+Found 1 commit:
+- b348f02: Add login feature
+<span class="p">mini-git&gt;</span> search --author=BOB
+Found 1 commit:
+- c2626a6: Fix login bug
+<span class="p">mini-git&gt;</span> log --sort-by=author
+commit bda937b (Alice, 2026-10-20 02:27:06)
+Initial commit
+commit b348f02 (Alice, 2026-10-20 02:27:06)
+Add login feature
+commit 27dd8e1 (Alice, 2026-10-20 02:27:06)
+Add payment feature
+commit 52b9683 (Alice, 2026-10-20 02:27:06) Merge: 27dd8e1 b348f02
+Merge branch 'feature' into main
+commit c2626a6 (Bob, 2026-10-20 02:27:06)
+Fix login bug</pre>
+          <p class="where"><code>index.py</code> · <code>SearchIndex</code> / <code>sorting.py</code> · <code>merge_sort()</code> / <code>cli.py</code> · <code>cmd_search()</code>, <code>cmd_log()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- 항목 2 -->
+<section id="s2">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag">PART 2</span>
+      <h2>어떻게 설계했는지 설명할 수 있는가</h2>
+      <p>코드를 왜 이렇게 나눴는지에 대한 질문입니다.</p>
+    </div>
+    <p class="easy"><b>쉽게 말하면</b> : 도서관에 비유하면 <code>commits</code> = 책장, <code>branches</code> = 책갈피, <code>head</code> = 지금 읽는 책갈피, <code>user</code> = 대출증, 역색인 = 찾아보기 카드입니다. 사서(<code>Repository</code>)가 이것들을 관리하고, 계산 담당(<code>graph</code>, <code>sorting</code>, <code>index</code>)은 받은 자료로 계산만 합니다.</p>
+    <div class="qs" style="margin-top:16px">
+
+      <article class="q" data-q="2-1">
+        <div class="q-head"><span class="q-no">2-1</span><h3>저장소 상태는 어떻게 나눴고, 각각 무슨 일을 하나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one"><code>Repository</code> 안에 변수 4개로 나누고, 변경 규칙은 <code>Repository</code> 메서드에서만 처리합니다.</p>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>이름</th><th>구조</th><th>책임</th></tr></thead>
+              <tbody>
+                <tr><td class="m">commits</td><td class="m">dict[hash, Commit]</td><td>모든 커밋 보관, hash로 찾기</td></tr>
+                <tr><td class="m">branches</td><td class="m">dict[이름, hash | None]</td><td>브랜치 이름표가 어느 커밋을 가리키는지</td></tr>
+                <tr><td class="m">head</td><td class="m">str (브랜치 이름)</td><td>지금 있는 브랜치. 새 커밋이 붙을 곳</td></tr>
+                <tr><td class="m">user</td><td class="m">str</td><td>다음 커밋의 작성자</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul>
+            <li>HEAD에 커밋 hash가 아니라 <b>브랜치 이름</b>을 넣은 이유 : 커밋할 때 <code>branches[head]</code>만 바꾸면 브랜치가 자동으로 앞으로 따라감</li>
+            <li>계층 : <code>cli.py</code>(입력·출력) → <code>repository.py</code>(상태) → <code>graph</code> · <code>sorting</code> · <code>index</code>(계산만). 위 계층만 아래를 부름</li>
+            <li><code>Commit</code>은 데이터만 담는 dataclass라 동작이 없음</li>
+          </ul>
+          <p class="where"><code>repository.py</code> · <code>Repository.__init__()</code> / <code>commit.py</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="2-2">
+        <div class="q-head"><span class="q-no">2-2</span><h3>hash로 커밋을 어떻게 빨리 찾고, hash가 겹치는 건 어떻게 막았나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one"><code>dict</code>(hash → Commit)로 평균 O(1)에 찾고, 새 hash가 이미 있으면 숫자(nonce)를 바꿔 다시 만들어 중복을 0개로 만듭니다.</p>
+          <ul>
+            <li>dict는 key를 계산해서 칸 번호를 바로 알아내기 때문에 커밋이 많아도 찾는 시간이 거의 같음</li>
+            <li>hash 원본 = <code>카운터 | nonce | 메시지 | 작성자 | 시각</code>. 카운터가 매번 달라서 같은 메시지, 같은 초여도 원본이 다름</li>
+            <li>SHA-1 앞 7자리만 쓰면 아주 드물게 겹칠 수 있음 → <code>candidate not in self.commits</code>로 확인하고, 겹치면 nonce + 1로 다시 계산</li>
+            <li>테스트 : 같은 메시지로 2,000번 커밋해도 hash 2,000개가 모두 다름 (<code>test_hashes_unique</code>)</li>
+            <li>다른 중복도 막음 : 같은 브랜치 이름 → <code>Branch already exists</code>, 역색인 같은 커밋 두 번 → <code>_seen</code> 집합으로 차단</li>
+          </ul>
+          <p class="where"><code>repository.py</code> · <code>_new_hash()</code>, <code>get_commit()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="2-3">
+        <div class="q-head"><span class="q-no">2-3</span><h3>역색인은 언제, 어떻게 갱신하나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">커밋을 저장하는 바로 그 순간(<code>_create_commit()</code> 마지막 줄)에 두 색인을 같이 갱신합니다.</p>
+          <ol>
+            <li>메시지를 공백으로 자르고 소문자로 바꿈 (<code>"Add login feature"</code> → <code>add</code>, <code>login</code>, <code>feature</code>)</li>
+            <li>단어마다 <code>keyword_index[단어]</code> 목록 끝에 hash 추가 (이미 있으면 건너뜀)</li>
+            <li><code>author_index[작성자 소문자]</code> 목록 끝에 hash 추가</li>
+          </ol>
+          <ul>
+            <li>COMMIT과 MERGE가 모두 <code>_create_commit()</code>을 지나서, 갱신하는 곳이 한 군데뿐 → 빠뜨릴 일이 없음</li>
+            <li>커밋은 한번 만들면 바뀌거나 지워지지 않음 → 색인 수정, 삭제 코드가 필요 없음</li>
+            <li>목록 끝에 붙이기만 하므로 결과가 자동으로 만든 순서대로 나옴</li>
+          </ul>
+          <p class="where"><code>repository.py</code> · <code>_create_commit()</code> / <code>index.py</code> · <code>SearchIndex.add_commit()</code>, <code>InvertedIndex.add()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="2-4">
+        <div class="q-head"><span class="q-no">2-4</span><h3>LOG, PATH, ANCESTORS의 탐색 코드는 어떻게 나눠서 재사용했나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one"><code>graph.py</code> 함수는 <code>dict[hash, Commit]</code>만 받고 hash 목록만 돌려줍니다. 저장소 상태, 출력 형식, 에러 메시지는 모릅니다.</p>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>작은 함수</th><th>쓰는 곳</th></tr></thead>
+              <tbody>
+                <tr><td class="m">build_children()</td><td>topological_sort (LOG)</td></tr>
+                <tr><td class="m">_undirected_neighbors() + _bfs_distances()</td><td>shortest_path (PATH)</td></tr>
+                <tr><td class="m">find_ancestors()</td><td>ANCESTORS, is_ancestor (MERGE의 Already up to date 판정)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul>
+            <li>역할 나누기 : <code>Repository</code>는 hash가 있는지 확인(<code>get_commit</code>)하고 결과 hash를 Commit으로 바꿈, <code>cli</code>는 출력 글자만 만듦</li>
+            <li>그래서 테스트에서 가짜 그래프(<code>make_graph</code>)를 바로 넣어 시험 가능. 일부러 순환을 만든 그래프도 넣어 봄 (<code>test_cycle_detected</code>)</li>
+          </ul>
+          <p class="where"><code>graph.py</code> 전체 / <code>tests/test_minigit.py</code> · <code>make_graph()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="2-5">
+        <div class="q-head"><span class="q-no">2-5</span><h3>docstring과 주석은 어떤 기준으로 썼나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">docstring에는 "무엇을 하는지, 어떤 방법인지, 얼마나 걸리는지"를, 한 줄 주석에는 "이 줄이 하는 일"을 쉬운 말로 적었습니다.</p>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>위치</th><th>적은 내용</th><th>예</th></tr></thead>
+              <tbody>
+                <tr><td>파일 맨 위</td><td>파일의 역할, 핵심 개념</td><td><code>graph.py</code> : 간선 방향이 자식 → 부모라 DAG</td></tr>
+                <tr><td>함수 docstring</td><td>받는 것, 돌려주는 것, 알고리즘 순서, 시간복잡도</td><td><code>topological_sort</code> : Kahn 알고리즘 4단계, O(V + E)</td></tr>
+                <tr><td>줄 끝 주석</td><td>그 줄이 하는 일</td><td><code>queue.popleft()  # 맨 앞 커밋을 꺼낸다</code></td></tr>
+                <tr><td>"왜" 주석</td><td>코드만 봐서는 이유를 모르는 곳</td><td><code>_merge</code>의 <code>&lt;=</code> → 같은 값이면 왼쪽 먼저 → 안정 정렬</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="where">모든 <code>minigit/*.py</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- 항목 3 -->
+<section id="s3">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag">PART 3</span>
+      <h2>개념을 설명할 수 있는가</h2>
+      <p>알고리즘과 자료구조를 고른 이유에 대한 질문입니다. 단계별 애니메이션은 <a href="visualization.html">시각 가이드</a>에도 있습니다.</p>
+    </div>
+    <p class="easy"><b>쉽게 말하면</b> : 커밋 기록은 "족보"입니다. 족보는 부모 → 자식 방향으로만 이어지고, 내가 내 할아버지가 될 수는 없습니다. 이 성질 덕분에 순서대로 나열하고(LOG), 촌수를 세고(PATH), 조상을 찾을(ANCESTORS) 수 있습니다.</p>
+    <div class="qs" style="margin-top:16px">
+
+      <article class="q" data-q="3-1">
+        <div class="q-head"><span class="q-no">3-1</span><h3>커밋 그래프는 왜 DAG이고, 순환이 생기면 뭐가 문제인가요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">부모는 항상 먼저 있고 커밋은 바뀌지 않아서 화살표가 과거로만 향합니다. 고리가 생기면 "누가 먼저인지"가 사라져 LOG, ANCESTORS가 성립하지 않습니다.</p>
+          <ul>
+            <li><b>방향</b> : 커밋을 만들 때 앞 커밋은 이미 있고 뒤 커밋은 아직 없음 → 앞 커밋만 가리킬 수 있음</li>
+            <li><b>고리 없음</b> : 이미 있는 커밋만 부모로 삼고, 만든 커밋은 안 바뀜 → 따라가면 첫 커밋에서 끝남</li>
+            <li><b>트리가 아님</b> : merge 커밋은 부모가 2개</li>
+          </ul>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>고리가 생기면</th><th>문제</th></tr></thead>
+              <tbody>
+                <tr><td>LOG</td><td>A가 B의 부모이면서 B가 A의 부모 → "부모 먼저"를 만족하는 순서가 없음. 출력할 수 있는 첫 커밋이 없어서 멈춤</td></tr>
+                <tr><td>ANCESTORS</td><td><code>visited</code>가 없으면 같은 커밋을 계속 돌아 끝나지 않음. 있어도 "내가 나의 조상"이라는 말이 안 되는 결과</td></tr>
+                <tr><td>기록의 의미</td><td>"이 변경이 저 변경보다 먼저"라는 역사가 성립하지 않음</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="demo">
+            <span class="demo-t">직접 해 보기 : 고리를 만들면 위상 정렬이 어떻게 되는지</span>
+            <div class="ctl"><button class="btn" id="cycleBtn" type="button">Initial commit의 부모를 Merge로 바꾸기 (고리 만들기)</button></div>
+            <div class="gbox" id="cycleGraph"></div>
+            <div class="out" id="cycleOut"></div>
+          </div>
+          <p class="where"><code>graph.py</code> · <code>topological_sort()</code>의 <code>raise ValueError("Commit graph has a cycle")</code> / <code>test_cycle_detected</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" id="q3-2" data-q="3-2">
+        <div class="q-head"><span class="q-no">3-2</span><h3>LOG에서 부모를 항상 먼저 보여 주려고 어떤 방법을 썼나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">Kahn 알고리즘으로 위상 정렬을 했습니다. "부모가 전부 출력된 커밋만 출력할 수 있다"는 규칙을 큐로 지킵니다.</p>
+          <ol>
+            <li>커밋마다 "아직 출력 안 된 부모 수"를 셈 (처음엔 <code>len(parents)</code>)</li>
+            <li>그 수가 0인 커밋(첫 커밋)을 큐에 넣음</li>
+            <li>큐에서 하나 꺼내 출력하고, 그 자식들의 수를 1씩 뺌</li>
+            <li>0이 된 자식을 큐에 넣음 → 큐가 빌 때까지 반복</li>
+          </ol>
+          <ul>
+            <li>merge 커밋은 부모 둘이 <b>다</b> 출력돼야 0이 되어 큐에 들어감</li>
+            <li>시각 순으로 하지 않은 이유 : 같은 초에 만든 커밋이 많아서 (1-3의 출력 참고)</li>
+            <li>O(V + E) : 커밋 하나, 연결 하나를 한 번씩만 봄</li>
+            <li><code>list.pop(0)</code>은 뒤 원소를 전부 당겨서 O(N) → <code>deque.popleft()</code> O(1) 사용</li>
+          </ul>
+          <p class="where"><code>graph.py</code> · <code>topological_sort()</code>, <code>build_children()</code> / <a href="visualization.html#topo">시각 가이드 단계 보기</a></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="3-3">
+        <div class="q-head"><span class="q-no">3-3</span><h3>PATH에 BFS를 쓴 이유와, 연결을 방향 없이 본 이유는요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">BFS입니다. 모든 선의 길이가 1인 그래프에서는 BFS가 처음 닿은 거리가 곧 최단 거리입니다. 무방향은 과제 요구이고, 그래야 형제 커밋 사이 거리를 잴 수 있습니다.</p>
+          <ul>
+            <li>BFS는 1칸 거리를 전부 본 다음 2칸 거리를 봄 → 먼저 닿은 길이 가장 짧은 길</li>
+            <li>방향을 지키면 자식 → 부모로만 갈 수 있음 → login에서 payment(형제)로 갈 길이 없음</li>
+            <li>무방향이면 "login → Initial → payment"처럼 위로 갔다가 내려올 수 있음 → "두 커밋이 몇 칸 떨어져 있나"를 셀 수 있음</li>
+            <li>동률 처리 : 도착점에서 BFS로 "남은 칸 수"를 먼저 구하고, 출발점부터 남은 칸이 1 줄어드는 이웃 중 hash가 가장 작은 쪽으로 감. hash 길이가 모두 7자라 이렇게 고르면 경로 글자 전체도 사전순 최소</li>
+            <li>O(V + E)</li>
+          </ul>
+          <p class="where"><code>graph.py</code> · <code>shortest_path()</code>, <code>_undirected_neighbors()</code>, <code>_bfs_distances()</code> / 방향을 지키면 어떻게 되는지는 <a href="#q4-2">4-2</a></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="3-4">
+        <div class="q-head"><span class="q-no">3-4</span><h3>구현한 정렬들의 시간복잡도와 안정성은요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">LOG --sort-by에는 최악에도 O(N log N)이고 안정 정렬인 병합 정렬을 씁니다.</p>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>알고리즘</th><th>평균</th><th>최악</th><th>안정</th><th>한 줄 설명</th></tr></thead>
+              <tbody>
+                <tr><td>병합 정렬 (사용)</td><td class="m">O(N log N)</td><td class="m">O(N log N)</td><td>O</td><td>반으로 계속 나눈 뒤 앞에서부터 비교하며 합침</td></tr>
+                <tr><td>퀵 정렬</td><td class="m">O(N log N)</td><td class="m">O(N²)</td><td>X</td><td>기준값보다 작은 쪽 / 큰 쪽으로 나눔. 기준값이 계속 끝 값이면 느려짐</td></tr>
+                <tr><td>삽입 정렬</td><td class="m">O(N²)</td><td class="m">O(N²)</td><td>O</td><td>카드 정리처럼 하나씩 알맞은 자리에 끼움. 거의 정렬된 입력은 O(N)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul>
+            <li><b>안정 정렬</b> = 기준값이 같으면 원래 순서를 지킴. 예) Alice 커밋 2개가 위상 정렬 순서 그대로 남음</li>
+            <li>병합 정렬이 안정인 이유 : 합칠 때 <code>key(left[i]) &lt;= key(right[j])</code>라서 같으면 왼쪽(원래 앞)을 먼저 넣음</li>
+            <li>퀵 정렬 : 제 구현은 작은/같은/큰 목록으로 나눠서 실제로는 순서가 유지되지만, 보통의 퀵 정렬은 배열 안에서 자리를 바꾸다 순서가 섞여서 불안정으로 분류</li>
+            <li><code>sorted()</code>, <code>list.sort()</code>는 금지 → 테스트가 소스 코드에서 이 글자를 찾아 검사 (<code>test_no_builtin_sort_used</code>)</li>
+          </ul>
+          <p class="where"><code>sorting.py</code> / 보너스 <code>bench</code> 명령 (<code>benchmark.py</code>)</p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="3-5">
+        <div class="q-head"><span class="q-no">3-5</span><h3>역색인은 왜 전부 훑는 검색보다 빠른가요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">순회는 검색할 때마다 모든 커밋 메시지를 읽지만(O(N × L)), 역색인은 커밋할 때 미리 적어 둔 목록을 dict에서 한 번에 꺼냅니다(평균 O(1) + 결과 수 K).</p>
+          <ul>
+            <li>N = 커밋 수, L = 메시지 길이, K = 찾은 커밋 수</li>
+            <li>책 비유 : 순회 = 처음부터 끝까지 넘기며 단어 찾기, 역색인 = 책 뒤 찾아보기에서 쪽 번호 바로 보기</li>
+            <li>dict가 O(1)인 이유 : key를 hash 계산해서 저장 칸 번호를 바로 알아냄 → 커밋이 몇 개든 칸을 찾는 시간은 같음</li>
+            <li>대가 : 커밋할 때 단어 수만큼 일을 더 함(O(단어 수)), 메모리를 더 씀. 검색이 커밋보다 훨씬 자주 일어나면 이득</li>
+            <li>직접 잰 값 (커밋 10,000개, 이 노트북) : 역색인 0.44ms, 전부 훑기 2.17ms</li>
+          </ul>
+          <div class="demo">
+            <span class="demo-t">직접 해 보기 : 커밋 수에 따라 확인해야 하는 양</span>
+            <div class="ctl">
+              <label for="nSel">커밋 수</label>
+              <select id="nSel"><option>100</option><option selected>1000</option><option>10000</option><option>100000</option></select>
+              <span>메시지 평균 3단어, "login"이 들어간 커밋 10개라고 가정</span>
+            </div>
+            <div class="out" id="idxOut"></div>
+          </div>
+          <p class="where"><code>index.py</code> · <code>InvertedIndex</code>, <code>SearchIndex.search_keyword()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- 항목 4 -->
+<section id="s4">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag">PART 4</span>
+      <h2>조건이 바뀌면 어떻게 할지 설명할 수 있는가</h2>
+      <p>지금 코드에 없는 상황에 대한 질문입니다. 아래 답은 실제로 코드를 바꿔 돌려 보고 확인한 내용입니다.</p>
+    </div>
+    <p class="easy"><b>쉽게 말하면</b> : "규칙 하나를 바꾸면 어디가 깨지고, 어디를 고치면 되는가"를 묻습니다. 답의 기본 틀은 <b>결과가 어떻게 달라지는지 → 바꿀 코드 → 같이 바꿀 테스트</b>입니다.</p>
+    <div class="qs" style="margin-top:16px">
+
+      <article class="q" data-q="4-1">
+        <div class="q-head"><span class="q-no">4-1</span><h3>커밋이 10배 많아지면 어디가 먼저 느려지고, 어떻게 고치나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">LOG, PATH, ANCESTORS가 호출될 때마다 그래프 보조 표를 처음부터 다시 만드는 것이 가장 큰 병목입니다. 커밋할 때 조금씩 미리 만들어 두면 됩니다.</p>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>명령</th><th>시간복잡도</th><th>1,000개</th><th>10,000개</th><th>배수</th></tr></thead>
+              <tbody>
+                <tr><td>LOG</td><td class="m">O(V + E)</td><td class="m">0.54ms</td><td class="m">5.57ms</td><td>약 10배</td></tr>
+                <tr><td>LOG --sort-by=author</td><td class="m">O(V log V)</td><td class="m">2.36ms</td><td class="m">27.89ms</td><td>약 12배</td></tr>
+                <tr><td>PATH (처음 ↔ 끝)</td><td class="m">O(V + E)</td><td class="m">0.73ms</td><td class="m">7.62ms</td><td>약 10배</td></tr>
+                <tr><td>ANCESTORS</td><td class="m">O(V + E)</td><td class="m">0.24ms</td><td class="m">2.37ms</td><td>약 10배</td></tr>
+                <tr><td>SEARCH</td><td class="m">O(K)</td><td class="m">0.04ms</td><td class="m">0.44ms</td><td>결과 수 K도 10배라서 10배</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="where" style="margin-top:-4px">일직선으로 커밋을 쌓고 이 노트북에서 직접 잰 값입니다. 실행할 때마다 조금씩 다릅니다.</p>
+          <div class="tbl">
+            <table>
+              <thead><tr><th>병목</th><th>개선 방향</th></tr></thead>
+              <tbody>
+                <tr><td>호출마다 <code>build_children()</code>, <code>_undirected_neighbors()</code>를 새로 만듦</td><td>커밋할 때 부모 → 자식 표, 이웃 표에 한 줄씩 추가해 두고 계속 씀 (증분 갱신)</td></tr>
+                <tr><td>LOG마다 위상 정렬</td><td>부모는 항상 자식보다 먼저 만들어짐 → <b>만든 순서 자체가 이미 위상 정렬 순서</b>. <code>commits</code>를 넣은 순서대로 읽으면 됨 (확인 완료)</td></tr>
+                <tr><td>LOG --sort-by마다 전체 정렬</td><td>정렬 결과를 저장해 두고, 새 커밋 하나만 이진 탐색으로 끼워 넣기. date 기준은 새 커밋이 항상 맨 뒤라 붙이기만 하면 됨</td></tr>
+                <tr><td>MERGE의 <code>is_ancestor()</code>가 조상을 끝까지 다 찾은 뒤 목록에서 찾음</td><td>BFS 도중 대상을 만나면 바로 멈추기</td></tr>
+                <tr><td>여러 단어 SEARCH의 교집합</td><td>가장 짧은 목록부터 시작해서 비교 횟수 줄이기</td></tr>
+                <tr><td>hash 7자리 = 약 2억 6,800만 가지</td><td>커밋 약 19,000개쯤이면 한 번이라도 겹칠 확률이 50%(생일 문제). nonce로 다시 만들어서 오류는 없지만, 커밋이 아주 많으면 자릿수를 늘림</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="where"><code>graph.py</code> 전체, <code>repository.py</code> · <code>log()</code>, <code>merge()</code>, <code>_new_hash()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" id="q4-2" data-q="4-2">
+        <div class="q-head"><span class="q-no">4-2</span><h3>PATH를 부모 방향으로만 갈 수 있게 바꾸면 결과와 코드는 어떻게 달라지나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">"자손 → 조상" 관계일 때만 길이 생깁니다. 형제 커밋 사이는 No path가 되고, PATH(A, B)와 PATH(B, A)의 결과가 달라집니다.</p>
+          <ul>
+            <li>달라지는 결과
+              <ul>
+                <li>login ↔ payment (형제) : <code>No path</code></li>
+                <li>Merge → Initial : 그대로 길이 있음</li>
+                <li>Initial → Merge : <code>No path</code> (부모에서 자식으로는 못 감)</li>
+                <li>길이 있으면 무방향일 때와 길이가 같거나 더 김 (갈 수 있는 길이 줄었으니까)</li>
+              </ul>
+            </li>
+            <li>바꿀 코드 (<code>shortest_path()</code>)
+              <ul>
+                <li>1단계 : 도착점에서 "남은 칸 수"를 구하는 BFS를 이웃 표가 아니라 <code>build_children()</code>(자식 방향)로 돌림. 출발점은 도착점의 자손이어야 하니까 도착점에서 자식 쪽으로 퍼져야 함</li>
+                <li>2단계 : 출발점에서 이동할 후보를 이웃이 아니라 <code>graph[current].parents</code>에서만 고름</li>
+              </ul>
+            </li>
+            <li>같이 바꿀 것 : <code>test_shortest_path_undirected</code>의 기대값을 <code>None</code>으로, HELP와 README의 PATH 설명</li>
+          </ul>
+          <div class="demo">
+            <span class="demo-t">직접 해 보기 : 무방향 vs 부모 방향만</span>
+            <div class="ctl">
+              <label for="pFrom">출발</label><select id="pFrom"></select>
+              <label for="pTo">도착</label><select id="pTo"></select>
+              <button class="btn on" id="modeU" type="button">무방향 (지금 코드)</button>
+              <button class="btn" id="modeD" type="button">부모 방향만</button>
+            </div>
+            <div class="gbox" id="pathGraph"></div>
+            <div class="out" id="pathOut"></div>
+          </div>
+          <p class="where"><code>graph.py</code> · <code>shortest_path()</code>, <code>build_children()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="4-3">
+        <div class="q-head"><span class="q-no">4-3</span><h3>작성자 정렬에서 부모 먼저 순서도 지켜야 한다면요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">위상 정렬의 큐를 "작성자 이름이 가장 작은 것부터 나오는 우선순위 큐"로 바꿉니다. 부모가 다 나온 커밋들 중에서만 작성자순으로 고르는 방식입니다.</p>
+          <ul>
+            <li>지금 방식(위상 정렬 → 작성자로 병합 정렬)의 문제 : Bob이 만든 부모보다 Alice가 만든 자식이 앞에 나올 수 있음 (아래 데모 왼쪽)</li>
+            <li>바꾼 방식
+              <ol>
+                <li>Kahn 알고리즘 그대로 "남은 부모 수"를 셈</li>
+                <li>남은 부모 수가 0인 커밋을 <b>최소 힙</b>(가장 작은 값이 항상 맨 위에 오는 구조)에 넣음. 기준 = (작성자 소문자, 생성 순번)</li>
+                <li>힙에서 꺼낼 때마다 지금 고를 수 있는 커밋 중 작성자가 가장 앞인 것이 나옴</li>
+              </ol>
+            </li>
+            <li>"부모 먼저"가 1순위, 작성자순은 2순위 → 완벽한 작성자순은 아닐 수 있음 (그게 이 요구사항에서 가능한 최선)</li>
+            <li>시간복잡도 O((V + E) log V)</li>
+            <li>정렬 라이브러리 금지 조건이 있어서 <code>heapq</code> 대신 힙을 직접 구현하는 게 안전</li>
+          </ul>
+          <div class="demo">
+            <span class="demo-t">직접 해 보기 : 두 방식 비교 (Initial, payment = Bob / login, Merge = Alice)</span>
+            <div class="two">
+              <div class="tbl" id="sortPlain"></div>
+              <div class="tbl" id="sortHeap"></div>
+            </div>
+          </div>
+          <p class="where"><code>graph.py</code> · <code>topological_sort()</code>의 <code>deque</code>를 힙으로 교체 / <code>repository.py</code> · <code>log()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+      <article class="q" data-q="4-4">
+        <div class="q-head"><span class="q-no">4-4</span><h3>hash를 카운터 기반이나 난수 기반으로 바꾸면 테스트, 재현, 디버깅은 어떻게 달라지나요?</h3><label class="can"><input type="checkbox">설명 가능</label></div>
+        <div class="ans">
+          <p class="one">카운터 기반은 같은 입력이면 매번 같은 hash라서 테스트, 재현, 디버깅이 쉽습니다. 난수 기반은 실행마다 hash가 바뀌어서 seed를 고정하지 않으면 같은 상황을 다시 만들 수 없습니다.</p>
+          <ul>
+            <li>지금 코드 : <code>SHA-1(카운터 | nonce | 메시지 | 작성자 | 시각)</code> → <b>시각이 들어가서</b> 실행마다 hash가 달라짐. 그래서 테스트는 이미 난수에 가까운 상황을 대비해 둠
+              <ul>
+                <li><code>test_path_and_ancestors_output</code> : hash를 미리 적지 않고 출력에서 잘라 씀 (<code>[6:13]</code>)</li>
+                <li><code>test_merge</code> : PATH 동률일 때 hash 크기에 따라 답이 바뀌어서 <code>smaller_path()</code>로 기대값을 계산</li>
+              </ul>
+            </li>
+          </ul>
+          <div class="tbl">
+            <table>
+              <thead><tr><th></th><th>카운터 기반 (시각 제외)</th><th>난수 기반</th></tr></thead>
+              <tbody>
+                <tr><td>테스트</td><td>hash를 고정값으로 비교 가능 (<code>assertEqual(h, "a1b2c3d")</code>)</td><td>고정값 비교 불가. 출력에서 꺼내 쓰거나 형식(7자리 16진수)만 검사</td></tr>
+                <tr><td>재현성</td><td>같은 명령 순서 → 같은 hash → 같은 PATH 동률 결과</td><td>실행마다 PATH 동률 결과가 바뀔 수 있음. <code>random.Random(seed)</code>로 seed를 고정해야 재현</td></tr>
+                <tr><td>디버깅</td><td>버그 보고의 hash를 그대로 다시 만들 수 있음, 순서 추적 쉬움</td><td>보고된 hash를 다시 만들 수 없어서 명령 기록이 따로 필요</td></tr>
+                <tr><td>충돌</td><td>앞 7자리만 쓰면 여전히 겹칠 수 있음 → nonce 검사 유지</td><td>같음 → 검사 유지</td></tr>
+                <tr><td>단점</td><td>hash를 미리 예측할 수 있음 (이 과제에서는 문제 없음)</td><td>예측 불가가 장점이지만 이 과제에는 필요 없음</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="demo">
+            <span class="demo-t">직접 해 보기 : 프로그램을 다시 실행했을 때 hash</span>
+            <div class="ctl"><button class="btn" id="rerunBtn" type="button">프로그램 다시 실행</button><span id="runNo">실행 1번째</span></div>
+            <div class="tbl" id="hashTbl"></div>
+            <p class="where" style="margin:0">데모용으로 간단한 hash 계산(FNV-1a)을 썼습니다. 실제 코드는 SHA-1입니다. 빨간 칸 = 지난 실행과 달라진 hash</p>
+          </div>
+          <p class="where"><code>repository.py</code> · <code>_new_hash()</code> / <code>tests/test_minigit.py</code> · <code>test_merge</code>, <code>smaller_path()</code></p>
+        </div>
+        <button class="btn reveal" type="button">답 보기</button>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">실행 화면과 단계별 애니메이션은 <a href="visualization.html">시각 가이드</a>, 질문과 답을 대화 형식으로 정리한 문서는 <a href="peer-review-qna.md">동료평가 대비 문서</a>에 있습니다. 테스트 실행 : <code>python -m unittest discover tests -v</code></div>
+</footer>
+
+<script>
+/* ================= 공통 도구 ================= */
+const $ = sel => document.querySelector(sel);                      // CSS 선택자로 요소 하나 찾기
+const SVGNS = "http://www.w3.org/2000/svg";                         // SVG 요소를 만들 때 필요한 이름표
+function S(tag, attrs, parent) {                                    // SVG 요소를 만들어 붙이는 함수
+  const el = document.createElementNS(SVGNS, tag);                  // SVG 요소 생성
+  for (const k in attrs) el.setAttribute(k, attrs[k]);              // 속성을 하나씩 설정
+  if (parent) parent.appendChild(el);                               // 부모가 있으면 그 안에 넣기
+  return el;                                                        // 만든 요소 반환
+}
+function esc(s) {                                                   // 글자를 HTML에 안전하게 넣기 (태그로 해석되지 않게)
+  return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);  // 특수문자를 바꿈
+}
+const store = {                                                     // 브라우저 저장소 (막혀 있어도 오류 없이 동작)
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },   // 읽기, 실패하면 null
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },                  // 쓰기, 실패하면 무시
+};
+
+/* ================= 연습 모드, 체크 ================= */
+const cards = [...document.querySelectorAll(".q")];                 // 질문 카드 전체
+const KEY = "minigit-eval-done";                                    // 체크 상태를 저장할 이름
+let done = new Set();                                               // 체크한 질문 번호 모음
+try { done = new Set(JSON.parse(store.get(KEY) || "[]")); } catch (e) {}   // 저장된 체크 불러오기 (깨졌으면 빈 상태)
+function paintDone() {                                              // 체크 상태를 화면에 반영
+  for (const c of cards) {                                          // 카드마다
+    const on = done.has(c.dataset.q);                               // 이 질문을 체크했는지
+    c.classList.toggle("done", on);                                 // 체크했으면 초록 테두리
+    c.querySelector(".can input").checked = on;                     // 체크 상자 상태 맞추기
+  }
+  $("#doneCount").textContent = done.size;                          // 체크한 개수 표시
+  $("#doneBar").style.width = (done.size / cards.length) * 100 + "%";   // 진행률 막대 길이
+}
+for (const c of cards) {                                            // 카드마다
+  c.querySelector(".can input").addEventListener("change", e => {   // 체크 상자를 누르면
+    if (e.target.checked) done.add(c.dataset.q); else done.delete(c.dataset.q);   // 체크 목록에 넣거나 빼기
+    store.set(KEY, JSON.stringify([...done]));                      // 저장
+    paintDone();                                                    // 화면 갱신
+  });
+  c.querySelector(".reveal").addEventListener("click", e => {       // 답 보기 버튼을 누르면
+    c.classList.toggle("open");                                     // 이 카드만 답 열기/닫기
+    e.target.textContent = c.classList.contains("open") ? "답 가리기" : "답 보기";   // 버튼 글자 바꾸기
+  });
+}
+$("#quizBtn").addEventListener("click", () => {                     // 연습 모드 버튼을 누르면
+  const on = document.body.classList.toggle("quiz");                // 연습 모드 켜기/끄기
+  $("#quizBtn").classList.toggle("on", on);                         // 버튼 색 바꾸기
+  for (const c of cards) { c.classList.remove("open"); c.querySelector(".reveal").textContent = "답 보기"; }   // 열어 둔 답 모두 닫기
+});
+$("#clearBtn").addEventListener("click", () => {                    // 체크 초기화 버튼을 누르면
+  done.clear();                                                     // 체크 목록 비우기
+  store.set(KEY, "[]");                                             // 저장된 값도 비우기
+  paintDone();                                                      // 화면 갱신
+});
+paintDone();                                                        // 처음 열 때 한 번 그리기
+
+/* ================= 예시 그래프 (다이아몬드 모양) ================= */
+const EX = [                                                        // 예시 커밋 4개 (만든 순서)
+  { hash: "505181a", msg: "Initial commit", author: "Bob", parents: [] },                      // 첫 커밋
+  { hash: "15809e9", msg: "Add login feature", author: "Alice", parents: ["505181a"] },        // feature 브랜치 커밋
+  { hash: "78ca51e", msg: "Add payment feature", author: "Bob", parents: ["505181a"] },        // main 브랜치 커밋
+  { hash: "e7a1f20", msg: "Merge branch 'feature'", author: "Alice", parents: ["78ca51e", "15809e9"] },   // 합친 커밋
+];
+const BY = Object.fromEntries(EX.map(c => [c.hash, c]));            // hash → 커밋 (dict처럼 바로 찾기)
+const POS = { "505181a": [95, 110], "15809e9": [305, 45], "78ca51e": [305, 175], "e7a1f20": [515, 110] };   // 그림에서 각 커밋 위치
+const BW = 160, BH = 44;                                            // 커밋 상자 너비, 높이
+
+function drawGraph(host, o) {                                       // 예시 그래프를 그리는 함수 (o = 강조 옵션)
+  host.innerHTML = "";                                              // 이전 그림 지우기
+  const svg = S("svg", { viewBox: "0 0 610 240", role: "img", "aria-label": "예시 커밋 그래프" }, host);   // 도화지
+  const defs = S("defs", {}, svg);                                  // 화살촉 모양을 담을 곳
+  for (const [id, cls] of [["a", "ah"], ["h", "ah-hl"], ["b", "ah-bad"]]) {   // 화살촉 3종류 (보통, 강조, 순환)
+    const m = S("marker", { id: host.id + id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto" }, defs);   // 화살촉 틀
+    S("path", { d: "M0,0 L10,5 L0,10 z", class: cls }, m);          // 세모 모양
+  }
+  for (const c of EX) for (const p of c.parents) {                  // 커밋마다, 부모마다 선 긋기
+    const [cx, cy] = POS[c.hash], [px, py] = POS[p];                // 자식 위치, 부모 위치
+    const hl = o.edges && (o.edges.has(c.hash + ">" + p) || o.edges.has(p + ">" + c.hash));   // 강조할 선인지
+    const line = S("line", { x1: cx - BW / 2, y1: cy, x2: px + BW / 2 + 2, y2: py, class: "e" + (hl ? " hl" : "") }, svg);   // 자식 왼쪽 → 부모 오른쪽
+    if (o.arrows) line.setAttribute("marker-end", `url(#${host.id}${hl ? "h" : "a"})`);   // 방향이 있으면 화살촉 달기
+  }
+  if (o.cycle) {                                                    // 고리 만들기를 켰으면
+    S("path", { d: "M95,132 C95,232 515,232 515,132", class: "e bad", "marker-end": `url(#${host.id}b)` }, svg);   // Initial → Merge 빨간 선
+    const t = S("text", { x: 305, y: 222, "text-anchor": "middle", class: "n-badge", style: "fill:var(--bad)" }, svg);   // 선 설명 글자
+    t.textContent = "Initial의 부모 = Merge (고리)";                // 글자 내용
+  }
+  for (const c of EX) {                                             // 커밋 상자 그리기
+    const [x, y] = POS[c.hash];                                     // 위치
+    const cls = o.hl && o.hl.has(c.hash) ? "hl" : o.dim ? "dim" : "";   // 강조, 흐림, 보통 중 하나
+    const g = S("g", { class: cls }, svg);                          // 상자 묶음
+    S("rect", { x: x - BW / 2, y: y - BH / 2, width: BW, height: BH, rx: 7, class: "n-box" }, g);   // 상자
+    const m = S("text", { x, y: y - 3, "text-anchor": "middle", class: "n-msg" }, g);   // 메시지 글자
+    m.textContent = c.msg;                                          // 메시지 내용
+    const h = S("text", { x, y: y + 14, "text-anchor": "middle", class: "n-hash" }, g); // hash 글자
+    h.textContent = c.hash;                                         // hash 내용
+    if (o.badges && o.badges[c.hash]) {                             // 상자 위에 쓸 글이 있으면
+      const b = S("text", { x, y: y - BH / 2 - 6, "text-anchor": "middle", class: "n-badge" }, g);   // 작은 글자
+      b.textContent = o.badges[c.hash];                             // 글 내용
+    }
+  }
+}
+
+/* ================= 3-1 고리 데모 ================= */
+let cycleOn = false;                                                // 고리를 만들었는지
+function kahn(parentsOf) {                                          // 위상 정렬 (graph.topological_sort와 같은 규칙)
+  const children = {}, indeg = {};                                  // 부모 → 자식 표, 남은 부모 수
+  for (const c of EX) { children[c.hash] = []; indeg[c.hash] = parentsOf[c.hash].length; }   // 표 준비
+  for (const c of EX) for (const p of parentsOf[c.hash]) children[p].push(c.hash);          // 자식 목록 채우기
+  const queue = EX.map(c => c.hash).filter(h => indeg[h] === 0);    // 남은 부모 수가 0인 커밋부터 큐에
+  const order = [];                                                 // 출력 순서
+  while (queue.length) {                                            // 큐가 빌 때까지
+    const cur = queue.shift();                                      // 맨 앞 꺼내기
+    order.push(cur);                                                // 출력
+    for (const ch of children[cur]) if (--indeg[ch] === 0) queue.push(ch);   // 자식의 남은 부모 수 -1, 0이면 큐에
+  }
+  return { order, indeg };                                          // 결과와 남은 부모 수 반환
+}
+function renderCycle() {                                            // 고리 데모 화면 그리기
+  const parentsOf = Object.fromEntries(EX.map(c => [c.hash, [...c.parents]]));   // 원래 부모 정보 복사
+  if (cycleOn) parentsOf["505181a"] = ["e7a1f20"];                  // 고리를 켜면 Initial의 부모를 Merge로
+  const { order, indeg } = kahn(parentsOf);                         // 위상 정렬 실행
+  const badges = {};                                                // 상자 위 글
+  for (const c of EX) badges[c.hash] = order.includes(c.hash) ? `${order.indexOf(c.hash) + 1}번째 출력` : `남은 부모 ${indeg[c.hash]} (못 나감)`;   // 출력 순서 또는 막힌 이유
+  drawGraph($("#cycleGraph"), { arrows: true, cycle: cycleOn, badges, hl: new Set(order) });   // 그래프 그리기 (출력된 커밋 강조)
+  const out = $("#cycleOut");                                       // 결과 칸
+  if (order.length === EX.length) {                                 // 4개 모두 출력했으면
+    out.className = "out ok";                                       // 초록색
+    out.textContent = `출력 ${order.length}/4 : ` + order.map(h => BY[h].msg).join(" → ");   // 출력 순서 보여 주기
+  } else {                                                          // 다 못 했으면
+    out.className = "out bad";                                      // 빨간색
+    out.textContent = `출력 ${order.length}/4 → 남은 부모 수가 0인 커밋이 없어서 시작조차 못 함\nValueError: Commit graph has a cycle`;   // 코드가 내는 에러
+  }
+  $("#cycleBtn").textContent = cycleOn ? "고리 없애기 (원래대로)" : "Initial commit의 부모를 Merge로 바꾸기 (고리 만들기)";   // 버튼 글자
+}
+$("#cycleBtn").addEventListener("click", () => { cycleOn = !cycleOn; renderCycle(); });   // 버튼 누르면 고리 켜기/끄기
+renderCycle();                                                      // 처음 한 번 그리기
+
+/* ================= 3-5 역색인 vs 순회 ================= */
+function renderIdx() {                                              // 커밋 수에 따른 비교 계산
+  const n = Number($("#nSel").value);                               // 고른 커밋 수
+  const words = 3, hits = 10;                                       // 메시지 단어 수, 찾을 커밋 수 (가정)
+  const scan = n * words;                                           // 순회 : 모든 커밋의 모든 단어를 비교
+  const idx = 1 + hits;                                             // 역색인 : dict 조회 1번 + 결과 꺼내기
+  $("#idxOut").textContent =                                        // 결과 칸에 쓰기
+    `순회   : 커밋 ${n.toLocaleString()}개 × 단어 ${words}개 = 비교 ${scan.toLocaleString()}번   O(N × L)\n` +   // 순회 비교 횟수
+    `역색인 : dict 조회 1번 + 결과 ${hits}개 꺼내기 = ${idx}번   O(1) + K\n` +                                // 역색인 횟수
+    `→ 역색인이 약 ${Math.round(scan / idx).toLocaleString()}배 적게 일함 (커밋이 늘어도 역색인 쪽은 그대로)`;   // 몇 배 차이인지
+}
+$("#nSel").addEventListener("change", renderIdx);                   // 커밋 수를 바꾸면 다시 계산
+renderIdx();                                                        // 처음 한 번 계산
+
+/* ================= 4-2 PATH 무방향 vs 부모 방향만 ================= */
+let directed = false;                                               // 부모 방향만 모드인지
+function bfsDist(start, next) {                                     // start에서 BFS로 거리 구하기 (next = 이웃 고르는 함수)
+  const dist = { [start]: 0 }, queue = [start];                     // 시작점 거리 0, 큐에 넣기
+  while (queue.length) {                                            // 큐가 빌 때까지
+    const cur = queue.shift();                                      // 맨 앞 꺼내기
+    for (const n of next(cur)) if (!(n in dist)) { dist[n] = dist[cur] + 1; queue.push(n); }   // 처음 보는 이웃이면 거리 기록
+  }
+  return dist;                                                      // 거리표 반환
+}
+const parents = h => BY[h].parents;                                 // 부모 목록
+const children = h => EX.filter(c => c.parents.includes(h)).map(c => c.hash);   // 자식 목록
+const neighbors = h => [...parents(h), ...children(h)];             // 무방향 이웃 = 부모 + 자식
+function findPath(s, e) {                                           // graph.shortest_path와 같은 2단계 방식
+  const dist = directed ? bfsDist(e, children) : bfsDist(e, neighbors);   // 1단계 : 도착점에서 남은 칸 수 (부모 방향만이면 자식 쪽으로 퍼짐)
+  if (!(s in dist)) return null;                                    // 출발점에 거리가 없으면 길 없음
+  const path = [s];                                                 // 경로 시작
+  let cur = s;                                                      // 현재 위치
+  while (cur !== e) {                                               // 도착할 때까지
+    const cands = (directed ? parents(cur) : neighbors(cur)).filter(n => dist[n] === dist[cur] - 1);   // 2단계 : 한 칸 가까워지는 후보
+    cur = cands.reduce((a, b) => (b < a ? b : a));                  // 그중 hash가 가장 작은 것
+    path.push(cur);                                                 // 경로에 추가
+  }
+  return path;                                                      // 경로 반환
+}
+function renderPath() {                                             // PATH 데모 화면 그리기
+  const s = $("#pFrom").value, e = $("#pTo").value;                 // 고른 출발, 도착
+  const p = findPath(s, e);                                         // 경로 찾기
+  const edges = new Set();                                          // 강조할 선
+  if (p) for (let i = 1; i < p.length; i++) edges.add(p[i - 1] + ">" + p[i]);   // 경로의 선 모으기
+  drawGraph($("#pathGraph"), { arrows: directed, edges, hl: new Set(p || [s, e]), dim: true });   // 그래프 그리기
+  const out = $("#pathOut");                                        // 결과 칸
+  out.className = "out " + (p ? "ok" : "bad");                      // 길 있으면 초록, 없으면 빨강
+  out.textContent = p ? "Path: " + p.join(" -> ") : "No path" + (directed ? "   (부모 방향으로만 가면 도착점에 닿지 않음)" : "");   // 결과 글
+  $("#modeU").classList.toggle("on", !directed);                    // 무방향 버튼 켜짐 표시
+  $("#modeD").classList.toggle("on", directed);                     // 부모 방향 버튼 켜짐 표시
+}
+for (const id of ["#pFrom", "#pTo"]) {                              // 출발, 도착 선택 상자마다
+  $(id).innerHTML = EX.map(c => `<option value="${c.hash}">${c.hash} ${esc(c.msg)}</option>`).join("");   // 커밋 4개를 선택지로
+  $(id).addEventListener("change", renderPath);                     // 바꾸면 다시 그리기
+}
+$("#pFrom").value = "15809e9";                                      // 처음 출발 = login
+$("#pTo").value = "78ca51e";                                        // 처음 도착 = payment (형제)
+$("#modeU").addEventListener("click", () => { directed = false; renderPath(); });   // 무방향 버튼
+$("#modeD").addEventListener("click", () => { directed = true; renderPath(); });    // 부모 방향만 버튼
+renderPath();                                                       // 처음 한 번 그리기
+
+/* ================= 4-3 작성자 정렬 두 방식 ================= */
+const authorKey = c => [c.author.toLowerCase(), EX.indexOf(c)];     // 정렬 기준 = (작성자 소문자, 만든 순서)
+const less = (a, b) => a[0] < b[0] || (a[0] === b[0] && a[1] < b[1]);   // 기준 a가 b보다 앞인지
+function mergeSort(arr) {                                           // 병합 정렬 (sorting.merge_sort와 같은 규칙)
+  if (arr.length <= 1) return arr.slice();                          // 0~1개면 그대로
+  const mid = arr.length >> 1;                                      // 가운데 위치
+  const L = mergeSort(arr.slice(0, mid)), R = mergeSort(arr.slice(mid));   // 반씩 정렬
+  const out = [];                                                   // 합친 결과
+  while (L.length && R.length) out.push(less(authorKey(R[0]), authorKey(L[0])) ? R.shift() : L.shift());   // 같으면 왼쪽 먼저 (안정)
+  return out.concat(L, R);                                          // 남은 것 붙이기
+}
+function heapTopo() {                                               // 작성자 우선순위 위상 정렬
+  const indeg = Object.fromEntries(EX.map(c => [c.hash, c.parents.length]));   // 남은 부모 수
+  const heap = [];                                                  // 최소 힙 (배열로 구현)
+  const push = c => {                                               // 힙에 넣기
+    heap.push(c);                                                   // 맨 끝에 넣고
+    let i = heap.length - 1;                                        // 넣은 위치
+    while (i > 0) {                                                 // 맨 위가 아닐 동안
+      const p = (i - 1) >> 1;                                       // 부모 칸 위치
+      if (!less(authorKey(heap[i]), authorKey(heap[p]))) break;     // 부모보다 크거나 같으면 멈춤
+      [heap[i], heap[p]] = [heap[p], heap[i]]; i = p;               // 작으면 부모와 자리 바꾸고 위로
+    }
+  };
+  const pop = () => {                                               // 힙에서 가장 작은 것 꺼내기
+    const top = heap[0], last = heap.pop();                         // 맨 위 기억, 맨 끝 빼기
+    if (heap.length) {                                              // 남은 게 있으면
+      heap[0] = last;                                               // 맨 끝을 맨 위로 올리고
+      let i = 0;                                                    // 위에서부터
+      for (;;) {                                                    // 자리를 찾을 때까지
+        const l = 2 * i + 1, r = l + 1;                             // 왼쪽, 오른쪽 자식 칸
+        let m = i;                                                  // 셋 중 가장 작은 칸
+        if (l < heap.length && less(authorKey(heap[l]), authorKey(heap[m]))) m = l;   // 왼쪽이 더 작으면
+        if (r < heap.length && less(authorKey(heap[r]), authorKey(heap[m]))) m = r;   // 오른쪽이 더 작으면
+        if (m === i) break;                                         // 내가 가장 작으면 멈춤
+        [heap[i], heap[m]] = [heap[m], heap[i]]; i = m;             // 아니면 자리 바꾸고 아래로
+      }
+    }
+    return top;                                                     // 가장 작은 것 반환
+  };
+  for (const c of EX) if (indeg[c.hash] === 0) push(c);             // 부모 없는 커밋부터 힙에
+  const out = [];                                                   // 출력 순서
+  while (heap.length) {                                             // 힙이 빌 때까지
+    const c = pop();                                                // 지금 고를 수 있는 것 중 작성자가 가장 앞인 커밋
+    out.push(c);                                                    // 출력
+    for (const ch of EX) if (ch.parents.includes(c.hash) && --indeg[ch.hash] === 0) push(ch);   // 자식의 남은 부모 수 -1, 0이면 힙에
+  }
+  return out;                                                       // 결과 반환
+}
+function sortTable(title, list) {                                   // 정렬 결과를 표로 만들기
+  const pos = Object.fromEntries(list.map((c, i) => [c.hash, i]));  // 커밋별 출력 위치
+  let bad = 0;                                                      // 순서를 어긴 개수
+  const rows = list.map((c, i) => {                                 // 줄마다
+    const late = c.parents.filter(p => pos[p] > i).map(p => BY[p].msg.split(" ")[0]);   // 나보다 늦게 나온 부모
+    if (late.length) bad++;                                         // 어겼으면 개수 +1
+    const check = late.length ? `<td class="x">✗ 부모(${esc(late.join(", "))})보다 먼저</td>` : `<td class="v">✓</td>`;   // 검사 칸
+    return `<tr><td>${i + 1}</td><td>${esc(c.msg)}</td><td>${c.author}</td>${check}</tr>`;   // 한 줄
+  }).join("");                                                      // 줄 합치기
+  const sum = bad ? `<span style="color:var(--bad)">부모-자식 순서 위반 ${bad}개</span>` : `<span style="color:var(--ok)">위반 0개</span>`;   // 요약
+  return `<table><thead><tr><th colspan="4">${title} · ${sum}</th></tr><tr><th>#</th><th>커밋</th><th>작성자</th><th>부모 먼저?</th></tr></thead><tbody>${rows}</tbody></table>`;   // 표 전체
+}
+$("#sortPlain").innerHTML = sortTable("지금 방식 : 작성자로 병합 정렬", mergeSort(EX));   // 왼쪽 표
+$("#sortHeap").innerHTML = sortTable("바꾼 방식 : 우선순위 위상 정렬", heapTopo());       // 오른쪽 표
+
+/* ================= 4-4 카운터 vs 난수 hash ================= */
+function fnv(s) {                                                   // 데모용 간단 hash (FNV-1a 32비트)
+  let h = 0x811c9dc5;                                               // 시작값
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }   // 글자마다 섞고 곱하기
+  return h.toString(16).padStart(8, "0").slice(0, 7);               // 16진수 앞 7자리
+}
+const randHex = () => Array.from({ length: 7 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("");   // 난수 7자리
+let run = 1, prev = null;                                           // 실행 횟수, 지난 실행 결과
+function renderHash() {                                             // hash 표 그리기
+  const now = EX.slice(0, 3).map((c, i) => ({ msg: c.msg, counter: fnv(`${i}|${c.msg}`), random: randHex() }));   // 커밋 3개의 두 방식 hash
+  const cell = (v, k, i) => `<td class="m${prev && prev[i][k] !== v ? " chg" : ""}">${v}</td>`;   // 지난번과 다르면 빨간 칸
+  $("#hashTbl").innerHTML = `<table><thead><tr><th>커밋</th><th>카운터 기반</th><th>난수 기반</th></tr></thead><tbody>` +
+    now.map((r, i) => `<tr><td>${esc(r.msg)}</td>${cell(r.counter, "counter", i)}${cell(r.random, "random", i)}</tr>`).join("") +   // 줄마다 두 hash
+    `</tbody></table>`;                                             // 표 닫기
+  $("#runNo").textContent = `실행 ${run}번째`;                      // 몇 번째 실행인지
+  prev = now;                                                       // 이번 결과를 다음 비교용으로 저장
+}
+$("#rerunBtn").addEventListener("click", () => { run++; renderHash(); });   // 다시 실행 버튼
+renderHash();                                                       // 처음 한 번 그리기
+</script>
+</body>
+</html>
