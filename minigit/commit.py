@@ -1,12 +1,12 @@
 """커밋 노드 정의."""
 
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass, field  # 데이터 담는 클래스를 짧게 만들어 주는 도구
+from datetime import datetime  # 날짜/시각 타입
 
-TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"  # 시각 출력 형식 (예: 2024-01-15 09:00:00)
 
 
-@dataclass
+@dataclass  # __init__ 등을 자동으로 만들어 준다
 class Commit:
     """커밋 그래프의 노드 하나.
 
@@ -20,14 +20,14 @@ class Commit:
         seq: 생성 순번. timestamp가 같을 때 순서를 구분하는 데 쓴다.
     """
 
-    hash: str
-    message: str
-    author: str
-    timestamp: datetime
-    parents: list[str] = field(default_factory=list)
-    branch: str = ""
-    seq: int = 0
+    hash: str  # 커밋 고유 번호 (7자리)
+    message: str  # 커밋 메시지
+    author: str  # 작성자
+    timestamp: datetime  # 만든 시각
+    parents: list[str] = field(default_factory=list)  # 부모 hash 목록 (커밋마다 새 빈 리스트)
+    branch: str = ""  # 만들어질 때의 브랜치 이름
+    seq: int = 0  # 생성 순번
 
     def time_str(self) -> str:
         """timestamp를 'YYYY-MM-DD HH:MM:SS' 형식 문자열로 반환한다."""
-        return self.timestamp.strftime(TIME_FORMAT)
+        return self.timestamp.strftime(TIME_FORMAT)  # 시각을 정해진 형식의 글자로 바꾼다
