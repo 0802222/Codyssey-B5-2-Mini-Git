@@ -2,3 +2,12 @@ __pycache__/
 *.pyc
 .DS_Store
 .venv/
+
+# 개인 학습 기록 (제출물 아님)
+_record/
+_practice/
+_learned/
+
+# 비밀 정보
+.env
+.env.*
