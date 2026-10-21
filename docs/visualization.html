@@ -701,7 +701,7 @@ footer { padding-block: 28px 40px; color: var(--muted); font-size: 13px; }
 <section id="check">
   <div class="wrap">
     <div class="sec-head">
-      <span class="cmd">README 11장 요약</span>
+      <span class="cmd">README 요구사항 체크리스트 요약</span>
       <h2>요구사항 체크리스트</h2>
       <p>명령 버튼을 누르면 맨 위 실행 화면에서 바로 실행됩니다.</p>
     </div>
@@ -1102,7 +1102,7 @@ const HELP_TEXT = `Commands (case-insensitive, quote arguments that contain spac
   SEARCH --author=<name>           Commits by an author
   MERGE <branch_name>              (bonus) Create a merge commit
   DIFF <file1> <file2>             (bonus) Line-by-line file comparison
-  BENCH [<size> ...]               (bonus) Compare sorting algorithm speed
+  BENCH [<item_count> ...]         (bonus) Compare sorting algorithm speed
   HELP                             Show this help
   EXIT | QUIT                      Quit`;
 
@@ -1318,7 +1318,7 @@ function reset(silentBase) {
   out.innerHTML = "";
   printLine("Mini Git - type HELP for commands, EXIT to quit", "sys");
   if (silentBase) {
-    printLine("(README 7-1 시연 명령을 미리 실행해 둔 상태)", "sys");
+    printLine("(README 시연 1 명령을 미리 실행해 둔 상태)", "sys");
     for (const l of SCENE_BASE) runLine(l);
     cli.hl = null;
   }
