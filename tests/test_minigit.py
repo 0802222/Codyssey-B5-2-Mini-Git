@@ -206,8 +206,11 @@ class TestCLI(unittest.TestCase):
         self.run_cmd("switch main")  # main으로 이동
         self.run_cmd('commit "Add payment feature"')  # main에 커밋
         log = self.run_cmd("log")  # 로그 출력
-        # 홀수 번째 줄(메시지)만 모아 순서 확인
-        self.assertEqual(log[1::2], ["Initial commit", "Add login feature", "Add payment feature"])
+        # 빈 줄을 제외한 홀수 번째 줄(메시지)만 모아 순서 확인
+        non_empty_log = [line for line in log if line]  # 커밋 사이 빈 줄 제거
+        self.assertEqual(non_empty_log[1::2], ["Initial commit", "Add login feature", "Add payment feature"])
+        self.assertEqual(log[2], "")  # 첫 번째 커밋과 두 번째 커밋 사이를 빈 줄로 구분
+        self.assertEqual(log[5], "")  # 두 번째 커밋과 세 번째 커밋 사이를 빈 줄로 구분
         search = self.run_cmd('search "login"')  # login 검색
         self.assertEqual(search[0], "Found 1 commit:")  # 1개 찾았다는 줄
         self.assertTrue(search[1].endswith(": Add login feature"))  # 찾은 커밋 메시지 확인

@@ -7,7 +7,7 @@ from .commit import Commit  # 커밋 타입
 from .diff import diff_files  # 파일 비교 함수
 from .repository import MiniGitError, Repository  # 저장소와 에러 타입
 
-PROMPT = "mini-git> "  # 입력 대기 표시
+PROMPT = "💾 mini-git> "  # 입력 대기 표시
 EXIT_COMMANDS = {"exit", "quit"}  # 종료 명령어 모음
 
 # HELP 명령으로 보여줄 도움말 (여러 줄 문자열)
@@ -24,7 +24,7 @@ Commands (case-insensitive, quote arguments that contain spaces):
   SEARCH --author=<name>           Commits by an author
   MERGE <branch_name>              (bonus) Create a merge commit
   DIFF <file1> <file2>             (bonus) Line-by-line file comparison
-  BENCH [<size> ...]               (bonus) Compare sorting algorithm speed
+  BENCH [<item_count> ...]         (bonus) Compare sorting algorithm speed
   HELP                             Show this help
   EXIT | QUIT                      Quit"""
 
@@ -149,6 +149,7 @@ class MiniGitCLI:
         lines = []  # 출력할 줄 목록
         for commit in commits:  # 커밋마다
             lines.extend(format_commit(commit, show_branch=sort_by is None))  # 두 줄씩 추가 (정렬 시 브랜치 생략)
+            lines.append("")  # 커밋마다 다음 커밋과 구분할 빈 줄 추가
         return lines  # 출력 줄 반환
 
     def cmd_path(self, args: list[str]) -> list[str]:
@@ -196,12 +197,12 @@ class MiniGitCLI:
 
     def cmd_bench(self, args: list[str]) -> list[str]:
         try:
-            sizes = [int(a) for a in args]  # 인자를 정수로 변환
+            item_counts = [int(a) for a in args]  # 정렬할 원소 개수 인자를 정수로 변환
         except ValueError:  # 숫자가 아니면
             raise MiniGitError("Invalid args")  # 에러
-        if any(size <= 0 for size in sizes):  # 0 이하 크기가 있으면
+        if any(item_count <= 0 for item_count in item_counts):  # 0 이하 원소 개수가 있으면
             raise MiniGitError("Invalid args")  # 에러
-        return run_benchmark(sizes or None)  # 크기가 없으면 기본값으로 벤치마크 실행
+        return run_benchmark(item_counts or None)  # 개수가 없으면 기본값으로 벤치마크 실행
 
     def cmd_help(self, args: list[str]) -> list[str]:
         return HELP_TEXT.splitlines()  # 도움말을 줄 단위로 반환
